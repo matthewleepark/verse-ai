@@ -1,7 +1,7 @@
-"""Today's verse as an interactive poster: Jesus stays still while the sea moves.
+"""Today's verse full screen: a woodcut of Jesus amid a comic-book sea.
 
 Builds web/today.html from web/template.html and opens it in your browser.
-Everything (all the daily verses, the artwork and the font) is embedded in the
+Everything (all the daily verses, the artwork and the fonts) is embedded in the
 page, so it works offline and you can browse days without running Python again.
 
 Usage:
@@ -60,12 +60,17 @@ def build(verse: Verse, day: date, output: Path = OUTPUT) -> Path:
         "startDate": day.isoformat(),
         "startOrdinal": day.toordinal(),
         "startIsToday": day == date.today(),
+        # The real date, so "Today" always means today even when opened with --date.
+        "todayOrdinal": date.today().toordinal(),
         "daily": daily,
         "notes": notes,
         "books": study.all_books(),
         "translation": verse.translation,
         "image": _data_uri(ASSETS / "schnorr-1860.jpg", "image/jpeg"),
-        "font": _data_uri(ASSETS / "BodoniModa.ttf", "font/ttf"),
+        "fonts": {
+            "bangers": _data_uri(ASSETS / "Bangers-Regular.ttf", "font/ttf"),
+            "comicNeue": _data_uri(ASSETS / "ComicNeue-Bold.ttf", "font/ttf"),
+        },
     }
     # "</" inside a <script> block could end it early, so escape it.
     payload = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")

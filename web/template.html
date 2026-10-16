@@ -6,209 +6,300 @@
 <title>verse-ai · Daily Verse</title>
 <style>
   :root {
-    --paper: #e6e1d6;
-    --ink: #1a1816;
-    --page: #0e0d0c;
+    --paper: #efe9dc;
+    --ink: #121110;
+    --white: #fffdf7;
   }
   * { box-sizing: border-box; margin: 0; }
-  html, body { height: 100%; background: var(--page); }
-  body {
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-    color: var(--ink);
-  }
-  /* The poster: a 4:5 card that fills the window height (or width on narrow screens). */
-  .poster {
-    position: relative;
-    height: min(100vh, 125vw);
-    aspect-ratio: 4 / 5;
-    container-type: size;
-    background: var(--paper);
-    box-shadow: 0 0 60px rgb(0 0 0 / 0.6);
-    overflow: hidden;
-  }
-  canvas, .fallback-img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-  }
+  html, body { height: 100%; background: var(--paper); overflow: hidden; }
+  body { font-family: "Comic Neue", "Segoe UI", Arial, sans-serif; color: var(--ink); }
+
+  canvas, .fallback-img { position: fixed; inset: 0; width: 100vw; height: 100vh; }
   canvas { cursor: crosshair; touch-action: none; }
-  .fallback-img { object-fit: cover; object-position: 46% 30%; filter: grayscale(1) contrast(0.85); display: none; }
-  .fallback-title { display: none; }
+  .fallback-img { object-fit: contain; object-position: 58% 100%; filter: grayscale(1); display: none; }
   .static .fallback-img { display: block; }
-  .static .fallback-title {
-    display: block;
-    position: absolute;
-    top: 6.5cqh;
-    width: 100%;
-    text-align: center;
-    font: 800 17cqh/1 "Bodoni Moda", "Bodoni MT", Didot, Georgia, serif;
-    opacity: 0.9;
-  }
 
-  /* Top bar: date on the left, controls on the right. */
-  .topbar {
-    position: absolute;
-    top: 2cqh;
-    left: 5cqw;
-    right: 4cqw;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 1.7cqw;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-  }
-  .date small { font-weight: 400; opacity: 0.65; margin-left: 0.8em; }
-  .controls { display: flex; gap: 0.4cqw; }
-  .controls button {
-    font: inherit;
-    letter-spacing: 0.14em;
-    color: var(--ink);
-    background: rgb(230 225 214 / 0.75);
-    border: 1px solid rgb(26 24 22 / 0.35);
-    padding: 0.5cqh 1.1cqw;
-    cursor: pointer;
-  }
-  .controls button:hover, .controls button:focus-visible { background: var(--ink); color: var(--paper); outline: none; }
-  .controls button:disabled { opacity: 0.35; cursor: default; background: rgb(230 225 214 / 0.75); color: var(--ink); }
-
-  .verse {
-    --ts: 1;
-    position: absolute;
-    left: 7cqw;
-    right: 7cqw;
-    bottom: 6cqh;
-    text-align: center;
-    transition: opacity 0.35s ease;
-  }
-  .verse.changing { opacity: 0; }
-  .verse .text {
-    font-size: calc(2.4cqw * var(--ts));
-    font-weight: 700;
-    line-height: 1.3;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-  }
-  .verse .ref {
-    margin-top: 1.8cqh;
-    font-family: "Bodoni Moda", "Bodoni MT", Didot, Georgia, serif;
-    font-size: calc(2.8cqw * var(--ts));
-    letter-spacing: 0.4em;
-  }
-  .hint {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 3.4cqh;
-    text-align: center;
-    font-size: 1.25cqw;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    opacity: 0.6;
-    transition: opacity 1.2s ease;
+  /* ---------- Top: date, title word, controls ---------- */
+  .heading {
+    position: fixed;
+    top: clamp(14px, 2.5vh, 32px);
+    left: clamp(16px, 3vw, 56px);
     pointer-events: none;
   }
-  .hint.gone { opacity: 0; }
-  .credit {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 1.3cqh;
-    text-align: center;
-    font-size: 1.05cqw;
-    letter-spacing: 0.12em;
+  .date {
+    display: inline-block;
+    font-weight: 700;
+    font-size: clamp(14px, 1.25vw, 22px);
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    opacity: 0.5;
+    background: var(--white);
+    border: 3px solid var(--ink);
+    padding: 4px 12px;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .date .badge { background: var(--ink); color: var(--white); padding: 0 8px; margin-left: 8px; }
+  .title {
+    margin-top: 0.15em;
+    font-family: "Bangers", "Impact", sans-serif;
+    font-size: clamp(56px, 9.5vw, 190px);
+    line-height: 0.95;
+    letter-spacing: 0.05em;
+    color: var(--white);
+    -webkit-text-stroke: 0.045em var(--ink);
+    paint-order: stroke fill;
+    text-shadow: 0.06em 0.06em 0 var(--ink);
+    transform: rotate(-3deg);
+    transform-origin: left center;
+    transition: opacity 0.25s ease, transform 0.25s ease;
   }
 
-  /* About panel: study notes or background on the book. */
-  .panel {
-    position: absolute;
-    left: 6cqw;
-    right: 6cqw;
-    bottom: 5cqh;
-    max-height: 62cqh;
-    overflow-y: auto;
-    padding: 3.5cqh 4.5cqw;
-    background: rgb(234 229 219 / 0.96);
-    border: 1px solid rgb(26 24 22 / 0.4);
-    box-shadow: 0 1cqh 4cqh rgb(0 0 0 / 0.25);
-    font-size: 1.9cqw;
-    line-height: 1.45;
-    transform: translateY(3cqh);
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+  .controls {
+    position: fixed;
+    top: clamp(14px, 2.5vh, 32px);
+    right: clamp(16px, 3vw, 56px);
+    display: flex;
+    gap: 12px;
+    z-index: 6;               /* stays clickable above the Context drawer */
   }
-  .panel.open { transform: none; opacity: 1; visibility: visible; }
-  .panel h2 {
-    font-family: "Bodoni Moda", "Bodoni MT", Didot, Georgia, serif;
-    font-size: 3.4cqw;
-    font-weight: 700;
-    margin-bottom: 1.2cqh;
-  }
-  .panel h3 {
-    font-size: 1.5cqw;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    margin: 2cqh 0 0.6cqh;
-  }
-  .panel .passage { opacity: 0.85; }
-  .panel .passage .num { font-size: 0.7em; font-weight: 700; opacity: 0.55; margin-right: 0.3em; }
-  .panel .passage .here { font-weight: 700; opacity: 1; }
-  .panel .close {
-    position: absolute;
-    top: 1.5cqh;
-    right: 2cqw;
-    font-size: 3cqw;
-    background: none;
-    border: none;
-    cursor: pointer;
+  .controls button {
+    font-family: "Bangers", "Impact", sans-serif;
+    font-size: clamp(20px, 1.7vw, 30px);
+    letter-spacing: 0.06em;
+    min-width: 64px;
+    min-height: 56px;
+    padding: 6px 20px;
     color: var(--ink);
+    background: var(--white);
+    border: 3px solid var(--ink);
+    box-shadow: 5px 5px 0 var(--ink);
+    cursor: pointer;
+    transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease;
+  }
+  .controls button:hover, .controls button:focus-visible {
+    transform: translate(-2px, -2px);
+    box-shadow: 7px 7px 0 var(--ink);
+    background: #fff3c4;
+    outline: none;
+  }
+  .controls button:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 var(--ink); }
+  .controls button:disabled { color: #a8a298; cursor: default; transform: none; box-shadow: 5px 5px 0 var(--ink); background: var(--white); }
+  .controls button[aria-pressed="true"], .controls button[aria-expanded="true"] { background: var(--ink); color: var(--white); }
+  .controls .arrow { font-size: 1.25em; line-height: 0; }
+  .controls .nav-label { font-size: 0.72em; letter-spacing: 0.08em; margin: 0 0.5em; }
+
+  /* Share menu */
+  .share { position: relative; }
+  .menu {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    background: var(--white);
+    border: 3px solid var(--ink);
+    box-shadow: 6px 6px 0 var(--ink);
+    z-index: 6;
+  }
+  .menu[hidden] { display: none; }
+  .menu button { white-space: nowrap; box-shadow: 3px 3px 0 var(--ink); min-height: 48px; text-align: left; }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: clamp(24px, 6vh, 64px);
+    transform: translate(-50%, 20px);
+    font-weight: 700;
+    font-size: clamp(15px, 1.1vw, 19px);
+    background: var(--ink);
+    color: var(--white);
+    padding: 10px 18px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 7;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* Outgoing copies of the title and caption during a transition. */
+  .ghost { pointer-events: none !important; z-index: 2; }
+  .title .ch { display: inline-block; }
+  @media (max-width: 1100px) { .controls .nav-label { display: none; } }
+
+  /* ---------- Bottom left: the verse in a comic caption box ---------- */
+  .caption {
+    --ts: 1;
+    position: fixed;
+    left: clamp(16px, 3vw, 56px);
+    bottom: clamp(18px, 4vh, 48px);
+    width: min(36vw, 640px);
+    background: var(--white);
+    border: 3px solid var(--ink);
+    box-shadow: 8px 8px 0 var(--ink);
+    padding: clamp(18px, 2vw, 32px) clamp(18px, 2vw, 32px) clamp(14px, 1.6vw, 26px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+  .caption .ref {
+    position: absolute;
+    top: -0.9em;
+    left: 18px;
+    font-family: "Bangers", "Impact", sans-serif;
+    font-size: clamp(20px, 1.8vw, 32px);
+    letter-spacing: 0.06em;
+    background: var(--ink);
+    color: var(--white);
+    padding: 2px 14px;
+  }
+  .caption .text {
+    font-weight: 700;
+    font-size: calc(clamp(17px, 1.45vw, 28px) * var(--ts));
+    line-height: 1.3;
+    text-transform: uppercase;
+  }
+
+  .hint, .credit {
+    position: fixed;
+    right: clamp(16px, 3vw, 56px);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    background: var(--white);
+    border: 2px solid var(--ink);
+    padding: 3px 10px;
+    pointer-events: none;
+  }
+  .hint {
+    top: calc(clamp(14px, 2.5vh, 32px) + 76px);
+    font-size: clamp(12px, 0.9vw, 15px);
+    box-shadow: 3px 3px 0 var(--ink);
+    transition: opacity 1.2s ease;
+  }
+  .hint.gone, .drawer.open ~ .hint { opacity: 0; }
+  .credit { bottom: clamp(10px, 1.6vh, 20px); font-size: clamp(10px, 0.68vw, 12px); }
+
+  /* ---------- Context drawer ---------- */
+  .drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(500px, 92vw);
+    overflow-y: auto;
+    background: var(--white);
+    border-left: 4px solid var(--ink);
+    box-shadow: -10px 0 0 rgb(18 17 16 / 0.18);
+    /* The top is left free so the day and Share buttons stay usable while it's open. */
+    padding: calc(clamp(14px, 2.5vh, 32px) + 92px) 30px 40px;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.55;
+    transform: translateX(105%);
+    transition: transform 0.3s ease;
+    z-index: 5;
+  }
+  .drawer.open { transform: none; }
+  .drawer .label { font-family: "Bangers", "Impact", sans-serif; font-size: 22px; letter-spacing: 0.1em; }
+  .drawer h2 { font-family: "Bangers", "Impact", sans-serif; font-weight: 400; font-size: 44px; letter-spacing: 0.04em; line-height: 1; margin: 4px 0 14px; }
+  .drawer h3 {
+    display: inline-block;
+    font-family: "Bangers", "Impact", sans-serif;
+    font-weight: 400;
+    font-size: 22px;
+    letter-spacing: 0.08em;
+    background: var(--ink);
+    color: var(--white);
+    padding: 1px 10px;
+    margin: 22px 0 8px;
+  }
+  .drawer .num { font-size: 0.72em; font-weight: 700; opacity: 0.5; margin-right: 0.25em; }
+  .drawer .here { font-weight: 700; background: #fff3c4; box-shadow: 0 0 0 2px #fff3c4; }
+  .drawer .close {
+    position: absolute;
+    top: calc(clamp(14px, 2.5vh, 32px) + 86px);
+    right: 22px;
+    width: 48px;
+    height: 48px;
+    font-family: "Bangers", "Impact", sans-serif;
+    font-size: 30px;
+    line-height: 1;
+    background: var(--white);
+    border: 3px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+    cursor: pointer;
+  }
+
+  /* Phones and narrow windows: controls in a row across the top, then the title,
+     with the caption across the bottom. */
+  @media (max-aspect-ratio: 1/1), (max-width: 700px) {
+    .controls {
+      left: 12px;
+      right: 12px;
+      top: 12px;
+      display: grid;
+      grid-template-columns: 0.8fr 1.3fr 0.8fr 1.5fr 1.3fr;
+      gap: 8px;
+    }
+    .controls button { min-width: 0; padding: 4px 6px; font-size: clamp(16px, 4.6vw, 24px); }
+    .controls .nav-label { display: none; }
+    .share > button { width: 100%; }
+    .heading { top: 88px; left: 14px; }
+    .title { font-size: clamp(44px, 14vw, 120px); }
+    .caption { width: auto; right: 14px; left: 14px; }
+    .hint { display: none; }
+  }
+
+  /* People who prefer less motion get instant UI changes (verse changes become short fades). */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0.01ms !important; }
   }
 </style>
 </head>
 <body>
-<main class="poster" id="poster">
-  <img class="fallback-img" id="fallbackImg" alt="">
-  <canvas id="scene" aria-label="Woodcut of Jesus catching Peter on a moving sea. Click the water to make ripples."></canvas>
-  <div class="fallback-title" id="fallbackTitle"></div>
+<img class="fallback-img" id="fallbackImg" alt="">
+<canvas id="scene" aria-label="Comic-style sea around a woodcut of Jesus catching Peter. Click the water to make a splash."></canvas>
 
-  <header class="topbar">
-    <span class="date" id="date"></span>
-    <nav class="controls" aria-label="Choose a day">
-      <button id="prev" title="Previous day (←)">‹</button>
-      <button id="today" title="Back to today (T)">Today</button>
-      <button id="next" title="Next day (→)">›</button>
-      <button id="about" title="About this verse (I)">About</button>
-    </nav>
-  </header>
+<header class="heading">
+  <div class="date" id="date"></div>
+  <h1 class="title" id="title"></h1>
+</header>
 
-  <section class="verse" id="verseBlock" aria-live="polite">
-    <p class="text" id="verseText"></p>
-    <p class="ref" id="verseRef"></p>
-  </section>
+<nav class="controls" aria-label="Choose a day">
+  <button id="prev"><span class="arrow" aria-hidden="true">‹</span><span class="nav-label" id="prevLabel"></span></button>
+  <button id="today" title="Back to today's verse (T)">Today</button>
+  <button id="next"><span class="nav-label" id="nextLabel"></span><span class="arrow" aria-hidden="true">›</span></button>
+  <button id="contextBtn" title="Context for this verse (C)" aria-pressed="false">Context</button>
+  <div class="share">
+    <button id="shareBtn" title="Share this verse" aria-haspopup="menu" aria-expanded="false">Share</button>
+    <div class="menu" id="shareMenu" role="menu" hidden>
+      <button role="menuitem" id="copyVerse">Copy verse</button>
+      <button role="menuitem" id="saveImage">Save image</button>
+      <button role="menuitem" id="nativeShare" hidden>Share…</button>
+    </div>
+  </div>
+</nav>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <aside class="panel" id="panel" aria-label="About this verse">
-    <button class="close" id="closePanel" title="Close (Esc)">×</button>
-    <div id="panelBody"></div>
-  </aside>
+<section class="caption" id="caption" aria-live="polite">
+  <div class="ref" id="verseRef"></div>
+  <p class="text" id="verseText"></p>
+</section>
 
-  <p class="hint" id="hint">Click the water · Arrow keys change the day · I for notes · Space pauses</p>
-  <footer class="credit">Art: Julius Schnorr von Carolsfeld, 1860 · public domain &nbsp;·&nbsp; <span id="translation"></span></footer>
-</main>
+<aside class="drawer" id="drawer" aria-label="Context for this verse">
+  <button class="close" id="closeDrawer" title="Close (Esc)" aria-label="Close">×</button>
+  <div class="label">Context</div>
+  <div id="drawerBody"></div>
+</aside>
+
+<p class="hint" id="hint">Click the water to splash · Arrow keys change the day · C for context · Space pauses</p>
+<p class="credit">Art: Julius Schnorr von Carolsfeld, 1860 (public domain) · <span id="translation"></span></p>
 
 <script>
-// visual.py replaces the next line with the verses, the artwork and the font.
+// visual.py replaces the next line with the verses, the artwork and the fonts.
 const DATA = /*__VERSE_DATA__*/null;
 
 // Outline around Jesus, Peter and the boat (fractions of the artwork's width/height).
-// Everything inside stays perfectly still; only the sea outside it moves.
+// Only this part of the woodcut is shown; the sea and sky around it are drawn live.
 const FIGURE = [
   [0.210, 0.198], [0.280, 0.144], [0.305, 0.102], [0.350, 0.066], [0.415, 0.051], [0.4525, 0.072],
   [0.4575, 0.138], [0.4675, 0.198], [0.500, 0.246], [0.560, 0.228], [0.550, 0.000], [0.645, 0.000],
@@ -217,11 +308,12 @@ const FIGURE = [
   [0.575, 0.912], [0.450, 0.900], [0.400, 0.936], [0.380, 0.984], [0.280, 1.000], [0.180, 1.000],
   [0.140, 0.936], [0.125, 0.768], [0.120, 0.600], [0.100, 0.432], [0.130, 0.372],
 ];
-const HORIZON = 0.25;           // where the sea meets the sky in the artwork
-const ART_HEIGHT = 0.84;        // share of the poster's height the artwork fills
-const FOCUS = [0.46, 0.5];      // which part of the artwork to keep when cropping
+const ART_HORIZON = 0.25;          // where the sea meets the sky inside the woodcut
+const JESUS_HEAD = [0.40, 0.09];   // centre of the light rays, in artwork coordinates
 const MAX_RIPPLES = 12;
-// Testing switches: ?nograin  ?t=SECONDS (freeze time)  ?ripple=X,Y (artwork coords)  ?panel
+const FPS_STEP = 10;               // waves move in steps, like hand-drawn animation
+const TRAVEL_MS = 1150;            // how long the scene glides when moving between verses
+// Testing switches: ?nograin  ?t=SECONDS (freeze time)  ?ripple=X,Y (screen fractions)  ?panel  ?lowres
 const PARAMS = new URLSearchParams(location.search);
 
 const VERTEX = `#version 300 es
@@ -236,67 +328,234 @@ const FRAGMENT = `#version 300 es
 precision highp float;
 in vec2 vUv;
 out vec4 outColor;
-uniform sampler2D uImage, uMask, uTitle;
-uniform vec2 uRes;
-uniform vec4 uCrop;      // visible part of the artwork: x, y, width, height
-uniform float uTime, uHorizon, uArtHeight, uGrain, uImgAspect;
-uniform vec4 uRipples[${MAX_RIPPLES}];   // x, y (artwork coords), start time, strength
+uniform sampler2D uImage, uMask;
+uniform vec2 uRes;            // canvas size in pixels
+uniform vec4 uFig;            // where the woodcut sits on screen: x, y, width, height (fractions)
+uniform vec2 uSun;            // Jesus' head on screen (fractions)
+uniform float uTime, uHorizon, uGrain, uDpr;
+uniform vec4 uRipples[${MAX_RIPPLES}];   // x, y (screen fractions), start time, strength
+// Moving between verses: uTravel slides the scene (nearer layers move more),
+// uPulse rises and falls during a transition, uProgress runs 0..1, uDir is +1 / -1,
+// and uMood (0..1, one value per verse) sets how stormy the sky is.
+uniform float uTravel, uPulse, uProgress, uDir, uMood;
 
+const vec3 PAPER = vec3(0.937, 0.914, 0.863);
+const vec3 WHITE = vec3(1.0, 0.992, 0.969);
+const vec3 INK = vec3(0.071, 0.067, 0.063);
+const int ROWS = 18;
+
+float hash1(float n) { return fract(sin(n * 127.1) * 43758.5453); }
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float noise(vec2 p) {
+  vec2 i = floor(p), f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y);
+}
+float fbm(vec2 p) {
+  float v = 0.0, a = 0.5;
+  for (int i = 0; i < 4; i++) { v += a * noise(p); p *= 2.03; a *= 0.5; }
+  return v;
+}
+
+// Halftone dots: returns 1 where ink should be printed for a given darkness (0..1).
+float halftone(float darkness, float cellPx) {
+  vec2 q = mat2(0.7071, -0.7071, 0.7071, 0.7071) * (gl_FragCoord.xy / (cellPx * uDpr));
+  float d = length(fract(q) - 0.5);
+  float r = sqrt(clamp(darkness, 0.0, 1.0)) * 0.68;
+  return 1.0 - smoothstep(r - 0.07, r + 0.07, d);
+}
+
+// Wave row i: crest height (screen y) at p.x, plus the phase used for shading.
+void waveRow(int i, float px, float ts, out float crest, out float u, out float amp, out float spacing) {
+  float fi = float(i);
+  float k = (fi + 1.0) / float(ROWS);
+  float k2 = (fi + 2.0) / float(ROWS);
+  float span = 1.0 - uHorizon;
+  float base = uHorizon + span * pow(k, 1.55);
+  spacing = span * (pow(k2, 1.55) - pow(k, 1.55));
+  amp = 0.005 + 0.07 * pow(k, 1.6);
+  float freq = mix(60.0, 6.5, pow(k, 0.7));
+  float dir = mod(fi, 2.0) < 1.0 ? 1.0 : -0.65;
+  u = px * freq + hash1(fi) * 6.2831 + ts * dir * mix(0.9, 2.2, k)
+    + uTravel * mix(1.2, 5.0, k);                    // parallax: near rows slide farther
+  // Sharp peaks and round troughs, like a woodblock-print wave.
+  crest = base - amp * pow(1.0 - abs(sin(u)), 2.2)
+               - amp * 0.3 * sin(u * 0.43 + fi + ts * 0.7)
+               + 0.004 * k * sin(ts * 2.0 + fi);
+}
 
 void main() {
-  // The artwork fills the top of the poster; below it the sea is mirrored, like a reflection.
-  vec2 iuv = uCrop.xy + vec2(vUv.x, vUv.y / uArtHeight) * uCrop.zw;
-  if (iuv.y > 1.0) iuv.y = 2.0 - iuv.y;
-  float figure = texture(uMask, iuv).r;
+  float aspect = uRes.x / uRes.y;
+  float pxSize = 1.0 / uRes.y;                       // one pixel, in screen-height units
+  float step_ = floor(uTime * ${FPS_STEP}.0);
+  float ts = step_ / ${FPS_STEP}.0;                  // stepped time: comic-style motion
+  // "Boil": the linework wobbles slightly on every step, like redrawn frames.
+  vec2 boil = (vec2(hash1(step_), hash1(step_ + 7.3)) - 0.5) * 0.0016;
+  vec2 uv = vUv + boil;
+  vec2 p = vec2(uv.x * aspect, uv.y);
 
-  // How much of this pixel is open water: none above the horizon or inside the figures.
-  float water = smoothstep(0.0, 0.06, iuv.y - uHorizon) * (1.0 - figure);
-  float depth = clamp((iuv.y - uHorizon) / (1.0 - uHorizon), 0.0, 1.0);
+  float ink = 0.0;     // 1 = black ink
+  float white = 0.0;   // 1 = bright paper (foam, highlights)
 
-  // Layered travelling waves; tighter and calmer toward the horizon for perspective.
-  float persp = mix(2.6, 1.0, depth);
-  float t = uTime;
-  float swell = sin(iuv.y * 38.0 * persp - t * 1.1 + sin(iuv.x * 5.0 + t * 0.35) * 2.2);
-  float chop = sin(iuv.y * 95.0 * persp + iuv.x * 14.0 - t * 2.3) * 0.45
-             + sin(iuv.x * 31.0 * persp - iuv.y * 22.0 + t * 1.6) * 0.35;
-  vec2 disp = vec2(chop * 0.55 + swell * 0.25, swell * 0.8 + chop * 0.3) * mix(0.0012, 0.0065, depth);
+  if (uv.y < uHorizon) {
+    // ---------- Sky ----------
+    float h = uv.y / uHorizon;
+    float dark = mix(mix(0.30, 0.50, uMood), 0.06, h);   // stormy at the top, lighter at the horizon
+    vec2 sun = vec2(uSun.x * aspect, uSun.y);
+    vec2 dv = p - sun;
+    float dist = length(dv);
+    float ang = atan(dv.y, dv.x);
+    float ray = step(0.5, fract(ang * 22.0 / 6.2831 + ts * 0.04 + uTravel * 0.06));
+    float rayReach = 1.0 - smoothstep(0.05, 1.1, dist);
+    dark = mix(dark, ray > 0.5 ? 0.02 : dark * 1.15, rayReach * 0.9);
+    float glow = 1.0 - smoothstep(0.0, 0.16, dist);
+    dark *= 1.0 - glow;
 
-  // Ripples from clicks and the mouse: expanding rings that fade as they spread.
-  float glint = smoothstep(0.75, 1.0, swell * 0.6 + chop * 0.5) * 0.10;
-  for (int i = 0; i < ${MAX_RIPPLES}; i++) {
-    vec4 r = uRipples[i];
-    float age = t - r.z;
-    if (r.w <= 0.0 || age < 0.0 || age > 5.0) continue;
-    vec2 dv = (iuv - r.xy) * vec2(uImgAspect, 1.0);
-    float d = length(dv);
-    float band = d - age * 0.16;
-    float wave = sin(band * 150.0) * exp(-band * band * 700.0) * exp(-age * 0.9) * r.w;
-    disp += (dv / max(d, 1e-4)) / vec2(uImgAspect, 1.0) * wave * 0.010;
-    glint += max(wave, 0.0) * 0.22;
+    // Storm clouds drifting in steps, with inked outlines and shaded undersides.
+    vec2 cp = p * vec2(1.5, 3.4) + vec2(ts * 0.035 + uTravel * 0.45, 0.0);
+    float c = fbm(cp);
+    float cloudLevel = mix(0.56, 0.50, uMood);       // stormier verses get more cloud
+    float cloudZone = 1.0 - smoothstep(0.55, 0.95, h);
+    float inCloud = step(cloudLevel, c) * cloudZone;
+    if (inCloud > 0.5) {
+      float under = smoothstep(0.0, 0.08, fbm(cp + vec2(0.0, 0.25)) - c);
+      dark = mix(0.04, 0.45, under);
+    }
+    float edge = abs(c - cloudLevel) / max(fwidth(c), 1e-4);
+    ink = max(ink, (1.0 - smoothstep(1.0, 2.2, edge)) * cloudZone);
+    ink = max(ink, halftone(dark, 7.0));
+
+    // Rain: thin diagonal streaks, redrawn every step.
+    vec2 rq = mat2(0.956, -0.292, 0.292, 0.956) * p;
+    float col = floor(rq.x * 130.0);
+    float rnd = hash1(col);
+    float line = 1.0 - smoothstep(0.08, 0.2, abs(fract(rq.x * 130.0) - 0.5));
+    float streak = step(0.9, rnd) * step(fract(rq.y * 1.4 + ts * (1.5 + rnd * 2.0) + rnd * 9.0), 0.22);
+    ink = max(ink, line * streak * (1.0 - glow) * 0.85);
+  } else {
+    // ---------- Sea: rows of comic waves, nearer rows drawn over farther ones ----------
+    int cur = -1;
+    float curCrest = 0.0, curU = 0.0, curAmp = 0.0, curSpacing = 1.0;
+    for (int i = 0; i < ROWS; i++) {
+      float crest, u, amp, spacing;
+      waveRow(i, p.x, ts, crest, u, amp, spacing);
+      if (uv.y > crest) { cur = i; curCrest = crest; curU = u; curAmp = amp; curSpacing = spacing; }
+    }
+    if (cur < 0) {
+      // Calm strip just below the horizon.
+      ink = step(fract((uv.y - uHorizon) / (2.5 * pxSize * uDpr)), 0.35) * 0.6;
+    } else {
+      float k = (float(cur) + 1.0) / float(ROWS);
+      float d = uv.y - curCrest;
+      float dpx = d / pxSize;
+      float dn = d / (curSpacing + curAmp * 0.6);
+      float peak = pow(1.0 - abs(sin(curU)), 6.0);
+      float foam = (0.10 + 0.38 * peak) * (0.65 + 0.35 * sin(curU * 5.0 + float(cur) * 1.7));
+      float lineW = mix(1.0, 3.8, k) * uDpr;
+      if (dpx < lineW) {
+        ink = 1.0;                                            // crest outline
+      } else if (dn < foam) {
+        white = 1.0;                                          // foam cap
+      } else if (dpx < lineW + foam * (curSpacing + curAmp * 0.6) / pxSize + lineW * 0.7) {
+        ink = 1.0;                                            // line under the foam
+      } else {
+        float body = smoothstep(foam, 1.0, dn);
+        float darkness = mix(0.12, 0.8, body) * mix(0.45, 1.0, k);
+        ink = halftone(darkness, mix(4.0, 7.0, k));
+        float gap = mix(3.0, 7.5, k) * uDpr;
+        float hatch = step(fract(dpx / gap), 0.3) * step(0.55, body);
+        ink = max(ink, hatch);
+      }
+    }
+
+    // Spray flicking off the crests of the nearest waves.
+    for (int i = ROWS - 7; i < ROWS; i++) {
+      if (cur > i) continue;                                  // hidden behind a nearer wave
+      float crest, u, amp, spacing;
+      waveRow(i, p.x, ts, crest, u, amp, spacing);
+      float n = floor(u / 3.14159 + 0.5);                     // nearest peak
+      if (hash(vec2(n, float(i))) < 0.45) continue;
+      float uPeak = n * 3.14159;
+      float xPeak = p.x - (u - uPeak) / mix(60.0, 6.5, pow((float(i) + 1.0) / float(ROWS), 0.7));
+      for (int j = 0; j < 3; j++) {
+        vec3 r3 = vec3(hash(vec2(n + float(j), step_ + float(i))), hash(vec2(n * 1.7, float(j) + step_)), hash(vec2(float(j), n + float(i))));
+        vec2 c = vec2(xPeak + (r3.x - 0.5) * amp * 1.6, crest - amp * (0.15 + r3.y * 0.9));
+        float rad = amp * (0.06 + 0.08 * r3.z);
+        float dd = length(vec2(p.x, uv.y) - c);
+        if (dd < rad) { white = 1.0; ink = 0.0; }
+        if (abs(dd - rad) < 1.2 * pxSize * uDpr) ink = 1.0;
+      }
+    }
   }
 
-  float lum = dot(texture(uImage, iuv + disp * water).rgb, vec3(0.299, 0.587, 0.114));
-  lum += glint * water;
+  // ---------- Splashes from clicks and the mouse ----------
+  for (int i = 0; i < ${MAX_RIPPLES}; i++) {
+    vec4 r = uRipples[i];
+    float age = floor((uTime - r.z) * ${FPS_STEP}.0) / ${FPS_STEP}.0;
+    if (r.w <= 0.0 || age < 0.0 || age > 3.0) continue;
+    vec2 c = vec2(r.x * aspect, r.y);
+    if (r.y > uHorizon) {
+      vec2 dv = p - c;
+      dv.y *= 3.2;                                            // flattened rings: water seen at an angle
+      float dist = length(dv);
+      for (int n = 0; n < 3; n++) {
+        float rad = age * 0.2 * r.w - float(n) * 0.045;
+        if (rad <= 0.0) continue;
+        float thick = (3.0 * (1.0 - age / 3.0) * r.w + 1.0) * pxSize * uDpr;
+        if (abs(dist - rad) < thick) { ink = 1.0; white = 0.0; }
+        else if (dist < rad - thick && dist > rad - 0.02) { white = 1.0; ink = 0.0; }
+      }
+    }
+    if (age < 0.9 && r.w > 0.5) {                             // droplets thrown up by a click
+      for (int j = 0; j < 7; j++) {
+        float hx = hash(vec2(float(j), r.z)), hy = hash(vec2(r.z, float(j)));
+        vec2 v = vec2((hx - 0.5) * 0.35, 0.45 + hy * 0.4);
+        vec2 dp = c + vec2(v.x * age, -v.y * age + 0.9 * age * age);
+        float rad = 0.006 + 0.004 * hy;
+        float dd = length(p - dp);
+        if (dd < rad) { white = 1.0; ink = 0.0; }
+        if (abs(dd - rad) < 1.3 * pxSize * uDpr) ink = 1.0;
+      }
+    }
+  }
 
-  // Faded print: lift the blacks, dim the whites, tint like old paper.
-  vec3 paper = vec3(0.90, 0.88, 0.84);
-  vec3 ink = vec3(0.10, 0.095, 0.09);
-  vec3 col = mix(ink, paper, mix(0.14, 0.95, clamp(lum, 0.0, 1.0)));
+  vec3 col = mix(PAPER, INK, clamp(ink, 0.0, 1.0));
+  col = mix(col, WHITE, white);
 
-  // Title letters pass behind Jesus (the left half of the artwork) but over the boat.
-  // They stay faintly visible through him so long words remain readable.
-  float behind = figure * (1.0 - smoothstep(0.50, 0.54, iuv.x)) * 0.72;
-  float title = texture(uTitle, vUv).a * (1.0 - behind);
-  col = mix(col, ink * 0.85, title * 0.93);
+  // ---------- The woodcut figures, cut out with the outline ----------
+  vec2 iuv = (vUv - uFig.xy) / uFig.zw;
+  if (all(greaterThanEqual(iuv, vec2(0.0))) && all(lessThanEqual(iuv, vec2(1.0)))) {
+    float m = texture(uMask, iuv).r;
+    // Fade where the woodcut's own border cuts through the boat and mast.
+    m *= 1.0 - smoothstep(0.86, 0.995, iuv.x);
+    m *= smoothstep(0.0, 0.08, iuv.y);
+    float lum = dot(texture(uImage, iuv).rgb, vec3(0.299, 0.587, 0.114));
+    vec3 art = mix(INK, WHITE, smoothstep(0.12, 0.82, lum));
+    // Near the cut edge, print the woodcut's lines over the sea (multiply) instead of
+    // pasting its white paper on top, so there's no pale halo around the figures.
+    vec3 overprint = col * art / WHITE;
+    vec3 blended = mix(overprint, art, smoothstep(0.72, 1.0, m));
+    col = mix(col, blended, smoothstep(0.0, 0.3, m));
+  }
 
-  // Wash the bottom so the verse is readable, then vignette and film grain.
-  col = mix(col, paper, smoothstep(uArtHeight - 0.16, uArtHeight + 0.04, vUv.y) * 0.72);
-  col = mix(col, paper, smoothstep(0.05, 0.0, vUv.y) * 0.6);
-  float v = length((vUv - 0.5) * vec2(1.0, 0.9));
-  col *= 1.0 - smoothstep(0.45, 0.85, v) * 0.35;
-  col += (hash(vUv * uRes + fract(t * 7.0) * 100.0) - 0.5) * 0.10 * uGrain;
+  // ---------- Moving between verses: a soft sweep of light and a few drifting motes ----------
+  if (uPulse > 0.001) {
+    float sweepX = uDir > 0.0 ? mix(-0.25, 1.25, uProgress) : mix(1.25, -0.25, uProgress);
+    float s = (vUv.x - sweepX) / 0.16;
+    col = mix(col, WHITE, uPulse * 0.2 + exp(-s * s) * uPulse * 0.38);
+    vec2 g = vec2(vUv.x * aspect, vUv.y) * 16.0 - vec2(uTravel * 5.0, uProgress * 0.6);
+    vec2 cell = floor(g);
+    if (hash(cell) > 0.88) {
+      vec2 at = vec2(hash(cell + 3.1), hash(cell + 7.7)) * 0.8 + 0.1;
+      float d = length(fract(g) - at);
+      col = mix(col, WHITE, (1.0 - smoothstep(0.015, 0.055, d)) * uPulse * 0.9);
+    }
+  }
 
+  // Paper texture that shifts a little each step, plus a soft vignette.
+  col += (hash(floor(gl_FragCoord.xy / uDpr) + step_ * 0.37) - 0.5) * 0.06 * uGrain;
+  float v = length((vUv - 0.5) * vec2(1.0, 1.1));
+  col *= 1.0 - smoothstep(0.55, 0.95, v) * 0.25;
   outColor = vec4(col, 1.0);
 }`;
 
@@ -308,53 +567,101 @@ const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 
 // ---------- Which verse is showing ----------
 
-let offset = 0;   // days away from the day the poster was opened for
+let offset = 0;   // days away from the day the page was opened for
 
 function verseFor(offsetDays) {
-  // The day the poster opened on may be a custom verse (--ref, --theme, --shuffle).
+  // The opening day may be a custom verse (--ref, --theme, --shuffle).
   if (offsetDays === 0) return DATA.start;
   const list = DATA.daily;
   const i = (((DATA.startOrdinal + offsetDays) % list.length) + list.length) % list.length;
   return list[i];
 }
 
-function dateLabel(offsetDays) {
+// The real date (from this computer's clock, so it stays right past midnight), as an
+// offset from the day the page was built for. Browsing never changes this.
+function localIsoToday() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+}
+const todayOffset = () => offsetForIso(localIsoToday());
+
+function dayFor(offsetDays) {
   const [y, m, d] = DATA.startDate.split("-").map(Number);
-  const day = new Date(Date.UTC(y, m - 1, d) + offsetDays * DAY_MS);
-  const text = `${WEEKDAYS[day.getUTCDay()]} · ${day.getUTCDate()} ${MONTHS[day.getUTCMonth()]} ${day.getUTCFullYear()}`;
-  const isToday = DATA.startIsToday && offsetDays === 0;
-  return { text, badge: isToday ? "Today" : "" };
+  return new Date(Date.UTC(y, m - 1, d) + offsetDays * DAY_MS);
+}
+
+function dateText(offsetDays) {
+  const day = dayFor(offsetDays);
+  return `${WEEKDAYS[day.getUTCDay()]}, ${MONTHS[day.getUTCMonth()]} ${day.getUTCDate()}, ${day.getUTCFullYear()}`;
+}
+
+function shortDate(offsetDays) {
+  const day = dayFor(offsetDays);
+  return `${MONTHS[day.getUTCMonth()].slice(0, 3)} ${day.getUTCDate()}`;
+}
+
+const isoDate = (offsetDays) => dayFor(offsetDays).toISOString().slice(0, 10);
+
+function offsetForIso(iso) {
+  const [y, m, d] = iso.split("-").map(Number);
+  const [sy, sm, sd] = DATA.startDate.split("-").map(Number);
+  return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(sy, sm - 1, sd)) / DAY_MS);
 }
 
 function fillText() {
   const verse = verseFor(offset);
-  const label = dateLabel(offset);
-  $("date").innerHTML = "";
-  $("date").append(label.text);
-  if (label.badge) {
-    const badge = document.createElement("small");
-    badge.textContent = label.badge;
+  $("date").textContent = dateText(offset);
+  if (offset === todayOffset()) {
+    const badge = document.createElement("span");
+    badge.className = "badge";
+    badge.textContent = "Today";
     $("date").append(badge);
   }
-  $("verseText").textContent = verse.text;
+  // One span per letter, so the title can be revealed letter by letter.
+  $("title").replaceChildren(...[...verse.word].map((ch) => {
+    const span = document.createElement("span");
+    span.className = "ch";
+    span.textContent = ch === " " ? " " : ch;
+    return span;
+  }));
+  $("title").setAttribute("aria-label", verse.word);
   $("verseRef").textContent = verse.ref;
+  $("verseText").textContent = verse.text;
   $("translation").textContent = DATA.translation;
-  $("fallbackTitle").textContent = verse.word;
-  $("today").disabled = offset === 0;
-  // Long passages: shrink the text until the block fits in the bottom third.
-  const block = $("verseBlock");
-  let scale = 1;
-  block.style.setProperty("--ts", scale);
-  while (block.offsetHeight > $("poster").offsetHeight * 0.30 && scale > 0.55) {
-    scale -= 0.05;
-    block.style.setProperty("--ts", scale);
+  $("today").disabled = offset === todayOffset();
+  fitCaption();
+  for (const [id, delta, word] of [["prev", -1, "Previous"], ["next", 1, "Next"]]) {
+    const label = `${word}: ${dateText(offset + delta)} · ${verseFor(offset + delta).ref}`;
+    $(id).title = `${label} (${delta < 0 ? "←" : "→"})`;
+    $(id).setAttribute("aria-label", label);
+    $(`${id}Label`).textContent = shortDate(offset + delta);
   }
-  if ($("panel").classList.contains("open")) fillPanel();
+  // Remember the day being viewed, so reloading the page keeps your place.
+  history.replaceState(null, "", `#${isoDate(offset)}`);
+  if ($("drawer").classList.contains("open")) fillDrawer();
 }
 
-function fillPanel() {
+// Long passages: shrink the text until the caption fits in about 40% of the height.
+function fitCaption() {
+  const caption = $("caption");
+  let scale = 1;
+  caption.style.setProperty("--ts", scale);
+  while (caption.offsetHeight > window.innerHeight * 0.4 && scale > 0.6) {
+    scale -= 0.05;
+    caption.style.setProperty("--ts", scale);
+  }
+}
+
+// Each verse gets its own sky: a steady 0..1 value from its reference.
+function moodFor(verse) {
+  let h = 0;
+  for (const ch of verse.ref) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return (h % 1000) / 1000;
+}
+
+function fillDrawer() {
   const verse = verseFor(offset);
-  const body = $("panelBody");
+  const body = $("drawerBody");
   body.innerHTML = "";
   const add = (tag, text, cls) => {
     const el = document.createElement(tag);
@@ -364,15 +671,9 @@ function fillPanel() {
     return el;
   };
   add("h2", verse.ref);
-  const notes = DATA.notes[verse.ref];
-  if (notes) {
-    add("h3", "Universal wisdom"); add("p", notes.wisdom);
-    add("h3", "Historical context"); add("p", notes.context);
-    add("h3", "Theological meaning"); add("p", notes.meaning);
-  }
   if (verse.context && verse.context.length) {
-    add("h3", "In context");
-    const p = add("p", "", "passage");
+    add("h3", "The passage");
+    const p = add("p", "");
     const [first, last] = verse.range;
     for (const [n, text] of verse.context) {
       const num = document.createElement("span");
@@ -380,20 +681,29 @@ function fillPanel() {
       num.textContent = n;
       const line = document.createElement("span");
       if (n >= first && n <= last) line.className = "here";
-      line.textContent = text + " ";
-      p.append(num, line);
+      line.textContent = text;
+      p.append(num, line, " ");
     }
+  }
+  const notes = DATA.notes[verse.ref];
+  if (notes) {
+    add("h3", "Universal wisdom"); add("p", notes.wisdom);
+    add("h3", "Historical context"); add("p", notes.context);
+    add("h3", "Theological meaning"); add("p", notes.meaning);
   }
   const book = DATA.books[verse.book];
   if (book) {
     add("h3", `About ${verse.book === "Psalm" ? "Psalms" : verse.book}`);
-    add("p", `${book.about} Author: ${book.author}. Date: ${book.date}.`);
+    add("p", book.about);
+    add("p", `Author: ${book.author}.`);
+    add("p", `Date: ${book.date}.`);
   }
 }
 
-function togglePanel(open = !$("panel").classList.contains("open")) {
-  if (open) fillPanel();
-  $("panel").classList.toggle("open", open);
+function toggleDrawer(open = !$("drawer").classList.contains("open")) {
+  if (open) fillDrawer();
+  $("drawer").classList.toggle("open", open);
+  $("contextBtn").setAttribute("aria-pressed", String(open));
 }
 
 // ---------- Drawing ----------
@@ -414,7 +724,7 @@ function makeMaskCanvas(img) {
   const ctx = c.getContext("2d");
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, w, h);
-  ctx.filter = `blur(${w * 0.012}px)`;
+  ctx.filter = `blur(${w * 0.018}px)`;
   ctx.fillStyle = "#fff";
   ctx.beginPath();
   // Push points on the artwork's border slightly outside so the blur doesn't fade them.
@@ -425,34 +735,21 @@ function makeMaskCanvas(img) {
   return c;
 }
 
-function makeTitleCanvas(w, h, word) {
-  const c = document.createElement("canvas");
-  c.width = w; c.height = h;
-  const ctx = c.getContext("2d");
-  const maxWidth = w * 0.92;
-  // Size the word to span the poster, keeping its capitals between 12% and 20% of the height.
-  const capRatio = 0.7;
-  ctx.font = `800 100px "Bodoni Moda"`;
-  let size = (maxWidth / ctx.measureText(word).width) * 100;
-  size = Math.min(size, (h * 0.20) / capRatio);
-  size = Math.max(size, (h * 0.12) / capRatio);
-  ctx.font = `800 ${size}px "Bodoni Moda"`;
-  const squeeze = Math.min(1, maxWidth / ctx.measureText(word).width);   // condense long words
-  ctx.fillStyle = "#fff";
-  ctx.textAlign = "center";
-  ctx.translate(w / 2, h * 0.065 + size * capRatio);
-  ctx.scale(squeeze, 1);
-  ctx.fillText(word, 0, 0);
-  return c;
-}
-
-function cropFor(canvasAspect, imgAspect) {
-  if (canvasAspect < imgAspect) {
-    const w = canvasAspect / imgAspect;
-    return [Math.min(Math.max(FOCUS[0] - w / 2, 0), 1 - w), 0, w, 1];
+// Where the woodcut sits: standing on the bottom edge, a little right of centre on wide screens.
+function figureRect(width, height, imgAspect) {
+  if (width < height) {
+    // Portrait (phones): bigger, cropped at the sides, centred on Jesus and Peter,
+    // and standing above the verse caption instead of hidden behind it.
+    const figH = Math.min(0.58 * height, (1.4 * width) / imgAspect);
+    const figW = figH * imgAspect;
+    const bottom = 0.74 * height;
+    return [(0.5 * width - 0.46 * figW) / width, (bottom - figH) / height, figW / width, figH / height];
   }
-  const h = imgAspect / canvasAspect;
-  return [0, Math.min(Math.max(FOCUS[1] - h / 2, 0), 1 - h), 1, h];
+  const figH = Math.min(0.9 * height, (0.98 * width) / imgAspect);
+  const figW = figH * imgAspect;
+  const centre = width / height > 1.15 ? 0.58 * width : 0.5 * width;
+  const x0 = Math.min(Math.max(centre - figW / 2, 0), width - figW);
+  return [x0 / width, (height - figH) / height, figW / width, figH / height];
 }
 
 function compile(gl, type, source) {
@@ -481,26 +778,32 @@ function texture(gl, unit, source, mipmaps) {
 }
 
 // Set up by start(); the controls call these.
-let scene = { redrawTitle() {}, ripple() {}, render() {}, togglePause() {} };
+let scene = { splash() {}, togglePause() {}, travel() {} };
+let artImage = null;   // the decoded woodcut, shared with the share card
+let frozenTravel = null;   // testing only: a fixed transition progress (0..1)
 
-function showStatic(img) {
-  $("poster").classList.add("static");
-  $("fallbackImg").src = img ? img.src : DATA.image;
+function showStatic() {
+  document.body.classList.add("static");
+  $("fallbackImg").src = DATA.image;
   $("scene").style.display = "none";
-  $("hint").textContent = "Arrow keys change the day · I for notes";
-  fillText();
+  $("hint").textContent = "Arrow keys change the day · C for context";
+}
+
+async function loadFonts() {
+  for (const [family, uri] of [["Bangers", DATA.fonts.bangers], ["Comic Neue", DATA.fonts.comicNeue]]) {
+    document.fonts.add(await new FontFace(family, `url(${uri})`, { weight: family === "Comic Neue" ? "700" : "400" }).load());
+  }
 }
 
 async function start() {
-  const font = new FontFace("Bodoni Moda", `url(${DATA.font})`, { weight: "400 900" });
-  document.fonts.add(await font.load());
+  await loadFonts();
   fillText();
 
-  const img = await loadImage(DATA.image);
+  const img = artImage = await loadImage(DATA.image);
   const canvas = $("scene");
   // preserveDrawingBuffer keeps a frozen frame on screen between redraws.
   const gl = canvas.getContext("webgl2", { antialias: false, preserveDrawingBuffer: true });
-  if (!gl) return showStatic(img);
+  if (!gl) return showStatic();
 
   let program;
   try {
@@ -511,7 +814,7 @@ async function start() {
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program));
   } catch (err) {
     console.error(err);
-    return showStatic(img);
+    return showStatic();
   }
   gl.useProgram(program);
 
@@ -528,13 +831,9 @@ async function start() {
   texture(gl, 1, makeMaskCanvas(img), false);
   gl.uniform1i(u("uImage"), 0);
   gl.uniform1i(u("uMask"), 1);
-  gl.uniform1i(u("uTitle"), 2);
-  gl.uniform1f(u("uHorizon"), HORIZON);
-  gl.uniform1f(u("uArtHeight"), ART_HEIGHT);
-  gl.uniform1f(u("uImgAspect"), imgAspect);
   gl.uniform1f(u("uGrain"), PARAMS.has("nograin") ? 0 : 1);
 
-  // A clock that stops while paused, so the waves and ripples freeze together.
+  // A clock that stops while paused, so the waves and splashes freeze together.
   const fixedTime = PARAMS.has("t") ? Number(PARAMS.get("t")) : null;
   const still = fixedTime !== null || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   let paused = false;
@@ -543,52 +842,76 @@ async function start() {
 
   const ripples = new Float32Array(MAX_RIPPLES * 4);
   let nextRipple = 0;
-  let crop = [0, 0, 1, 1];
+  let horizon = 0.4;
+  let figBase = [0, 0, 1, 1];
 
-  const draw = () => {
+  // Travel between verses: an eased glide from one scene position (and sky mood) to the next.
+  const travelState = { from: 0, to: 0, moodFrom: moodFor(verseFor(offset)), moodTo: moodFor(verseFor(offset)), dir: 1, start: -Infinity };
+  const easeInOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+
+  function travelUniforms(now) {
+    const s = travelState;
+    let p = still ? 1 : Math.min(Math.max((now - s.start) / TRAVEL_MS, 0), 1);
+    if (frozenTravel !== null) p = frozenTravel;     // testing: hold the scene mid-transition
+    const e = easeInOut(p);
+    const pulse = p < 1 ? Math.sin(p * Math.PI) : 0;
+    gl.uniform1f(u("uTravel"), s.from + (s.to - s.from) * e);
+    gl.uniform1f(u("uMood"), s.moodFrom + (s.moodTo - s.moodFrom) * e);
+    gl.uniform1f(u("uPulse"), pulse);
+    gl.uniform1f(u("uProgress"), p);
+    gl.uniform1f(u("uDir"), s.dir);
+    // The figures lean very slightly against the direction of travel, then settle.
+    const [x, y, w, h] = figBase;
+    const grow = 1 + 0.014 * pulse;
+    gl.uniform4f(u("uFig"), x - s.dir * 0.01 * pulse - (w * (grow - 1)) / 2, y - h * (grow - 1), w * grow, h * grow);
+  }
+
+  const draw = (now = performance.now()) => {
     gl.uniform1f(u("uTime"), clock);
     gl.uniform4fv(u("uRipples"), ripples);
+    travelUniforms(now);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   };
 
-  let titleTex = null;
-  function redrawTitle() {
-    if (titleTex) gl.deleteTexture(titleTex);
-    titleTex = texture(gl, 2, makeTitleCanvas(canvas.width, canvas.height, verseFor(offset).word), false);
-    if (still || paused) draw();
+  function travel(dir) {
+    const s = travelState;
+    const now = performance.now();
+    const p = Math.min(Math.max((now - s.start) / TRAVEL_MS, 0), 1);
+    // Start from wherever the scene is right now, so rapid clicks never jump.
+    s.from = s.from + (s.to - s.from) * easeInOut(p);
+    s.moodFrom = s.moodFrom + (s.moodTo - s.moodFrom) * easeInOut(p);
+    s.to = s.from + dir;
+    s.moodTo = moodFor(verseFor(offset));
+    s.dir = dir;
+    s.start = now;
+    if (still) draw(now);
   }
 
   function resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.round(canvas.clientWidth * dpr);
-    canvas.height = Math.round(canvas.clientHeight * dpr);
+    // ?lowres (testing) draws the sea at a third of the size, for slow software renderers.
+    const dpr = PARAMS.has("lowres") ? 0.33 : Math.min(window.devicePixelRatio || 1, 1.5);
+    canvas.width = Math.round(window.innerWidth * dpr);
+    canvas.height = Math.round(window.innerHeight * dpr);
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.uniform2f(u("uRes"), canvas.width, canvas.height);
-    crop = cropFor(canvas.width / (canvas.height * ART_HEIGHT), imgAspect);
-    gl.uniform4fv(u("uCrop"), crop);
-    fillText();
-    redrawTitle();
+    gl.uniform1f(u("uDpr"), dpr);
+    const fig = figureRect(canvas.width, canvas.height, imgAspect);
+    figBase = fig;
+    // Line the drawn horizon up with the horizon inside the woodcut.
+    horizon = fig[1] + ART_HORIZON * fig[3];
+    gl.uniform1f(u("uHorizon"), horizon);
+    gl.uniform2f(u("uSun"), fig[0] + JESUS_HEAD[0] * fig[2], fig[1] + JESUS_HEAD[1] * fig[3]);
+    fitCaption();
     // Resizing clears the canvas, so a frozen scene must be redrawn here.
     if (still || paused) draw();
   }
 
-  // Turn a point on the canvas into artwork coordinates (matching the shader).
-  function toArtwork(clientX, clientY) {
-    const rect = canvas.getBoundingClientRect();
-    const vx = (clientX - rect.left) / rect.width;
-    const vy = (clientY - rect.top) / rect.height;
-    let ix = crop[0] + vx * crop[2];
-    let iy = crop[1] + (vy / ART_HEIGHT) * crop[3];
-    if (iy > 1) iy = 2 - iy;
-    return [ix, iy];
-  }
-
-  function ripple(clientX, clientY, strength) {
+  function splash(clientX, clientY, strength) {
     if (still) return;
-    const [x, y] = toArtwork(clientX, clientY);
-    ripples.set([x, y, clock, strength], nextRipple * 4);
+    ripples.set([clientX / window.innerWidth, clientY / window.innerHeight, clock, strength], nextRipple * 4);
     nextRipple = (nextRipple + 1) % MAX_RIPPLES;
     $("hint").classList.add("gone");
+    if (paused) draw();
   }
 
   function togglePause() {
@@ -597,19 +920,22 @@ async function start() {
     last = performance.now();
   }
 
-  scene = { redrawTitle, ripple, render: draw, togglePause };
-  if (PARAMS.has("ripple")) ripples.set([...PARAMS.get("ripple").split(",").map(Number), 0, 1], 0);
+  scene = { splash, togglePause, travel };
+  if (PARAMS.has("ripple")) {
+    const [x, y] = PARAMS.get("ripple").split(",").map(Number);
+    ripples.set([x, y, (fixedTime ?? 0) - 0.5, 1], 0);
+  }
   resize();
   window.addEventListener("resize", resize);
 
-  // Clicks make strong ripples; moving across the water leaves a gentle wake.
+  // Clicks make a big splash; moving across the water leaves small rings.
   let lastWake = 0;
-  canvas.addEventListener("pointerdown", (e) => ripple(e.clientX, e.clientY, 1.0));
+  canvas.addEventListener("pointerdown", (e) => splash(e.clientX, e.clientY, 1.0));
   canvas.addEventListener("pointermove", (e) => {
     const now = performance.now();
-    if (now - lastWake > 140) {
+    if (now - lastWake > 220 && e.clientY / window.innerHeight > horizon) {
       lastWake = now;
-      ripple(e.clientX, e.clientY, e.buttons ? 0.7 : 0.25);
+      splash(e.clientX, e.clientY, e.buttons ? 0.7 : 0.3);
     }
   });
 
@@ -617,52 +943,355 @@ async function start() {
     const frame = (now) => {
       if (!paused) clock += Math.min(now - last, 100) / 1000;
       last = now;
-      draw();
+      draw(now);
       requestAnimationFrame(frame);
     };
     requestAnimationFrame(frame);
   }
 }
 
-// ---------- Controls ----------
+// ---------- Moving between verses ----------
+//
+// The day changes immediately (so Context, Share and the address always match what
+// you're reading); only the visuals animate. The outgoing title and caption are
+// copied into "ghost" layers that fade away while the real ones reveal the new verse.
+
+const reducedMotion = () =>
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches || PARAMS.has("t");
+let transition = { animations: [], ghosts: [], timer: 0 };
+
+function settleTransition() {
+  clearTimeout(transition.timer);
+  for (const a of transition.animations) a.finish();
+  for (const g of transition.ghosts) g.remove();
+  transition = { animations: [], ghosts: [], timer: 0 };
+}
+
+function ghostOf(el) {
+  const ghost = el.cloneNode(true);
+  ghost.removeAttribute("id");
+  ghost.querySelectorAll("[id]").forEach((n) => n.removeAttribute("id"));
+  ghost.classList.add("ghost");
+  ghost.setAttribute("aria-hidden", "true");
+  document.body.append(ghost);
+  return ghost;
+}
 
 function go(newOffset) {
   if (newOffset === offset) return;
-  const block = $("verseBlock");
-  block.classList.add("changing");
-  setTimeout(() => {
-    offset = newOffset;
-    fillText();
-    scene.redrawTitle();
-    block.classList.remove("changing");
-  }, 200);
+  const dir = Math.sign(newOffset - offset);
+  settleTransition();                          // rapid clicks: finish the last one instantly
+  const heading = document.querySelector(".heading");
+  const caption = $("caption");
+  const ghosts = [ghostOf(heading), ghostOf(caption)];
+  offset = newOffset;
+  fillText();
+  scene.travel(dir);
+
+  const anims = [];
+  const play = (el, keyframes, options) => anims.push(el.animate(keyframes, { fill: "backwards", ...options }));
+
+  if (reducedMotion()) {
+    // A short, motion-free crossfade.
+    play(ghosts[0], [{ opacity: 1 }, { opacity: 0 }], { duration: 160, fill: "forwards" });
+    play(ghosts[1], [{ opacity: 1 }, { opacity: 0 }], { duration: 160, fill: "forwards" });
+    play(heading, [{ opacity: 0 }, { opacity: 1 }], { duration: 160 });
+    play(caption, [{ opacity: 0 }, { opacity: 1 }], { duration: 160 });
+  } else {
+    const ease = "cubic-bezier(0.22, 0.61, 0.36, 1)";
+    // Forward: the old title passes by the viewer as the new one rises out of the depth.
+    // Backward: the old title recedes into the depth as the previous one comes back forward.
+    play(ghosts[0], [
+      { opacity: 1, transform: "none", filter: "blur(0)" },
+      { opacity: 0, transform: `translate3d(${-dir * 2}vw, -0.5vh, 0) scale(${dir > 0 ? 1.12 : 0.88})`, filter: "blur(7px)" },
+    ], { duration: 520, easing: "cubic-bezier(0.4, 0, 0.6, 1)", fill: "forwards" });
+    const letters = [...$("title").children];
+    letters.forEach((letter, i) => {
+      const order = dir > 0 ? i : letters.length - 1 - i;     // letters arrive in the direction of travel
+      play(letter, [
+        { opacity: 0, transform: `translateY(0.16em) scale(${dir > 0 ? 0.8 : 1.2})`, filter: "blur(9px)" },
+        { opacity: 1, transform: "none", filter: "blur(0)" },
+      ], { duration: 640, delay: 200 + order * 42, easing: ease });
+    });
+    play($("date"), [{ opacity: 0 }, { opacity: 1 }], { duration: 400, delay: 160 });
+    // The caption moves only a little, and the old verse is gone before the new one
+    // appears, so two passages never overlap.
+    play(ghosts[1], [
+      { opacity: 1, transform: "none" },
+      { opacity: 0, transform: `translateX(${-dir * 20}px)` },
+    ], { duration: 200, easing: "ease-in", fill: "forwards" });
+    play(caption, [
+      { opacity: 0, transform: `translateX(${dir * 20}px)` },
+      { opacity: 1, transform: "none" },
+    ], { duration: 480, delay: 180, easing: ease });
+    play($("verseRef"), [
+      { clipPath: "inset(0 100% 0 0)" },
+      { clipPath: "inset(0 0 0 0)" },
+    ], { duration: 520, delay: 300, easing: ease });
+    if ($("drawer").classList.contains("open")) {
+      play($("drawerBody"), [{ opacity: 0 }, { opacity: 1 }], { duration: 240 });
+    }
+  }
+  for (const g of ghosts) g.getAnimations().forEach((a) => a.finished.then(() => g.remove(), () => {}));
+  // Safety net: if the browser stalls (a busy or backgrounded tab), still end on the
+  // finished state, so the new title never stays invisible.
+  const timer = setTimeout(settleTransition, 1600);
+  transition = { animations: anims, ghosts, timer };
+}
+
+// ---------- Sharing: always the verse on screen ----------
+
+const currentVerse = () => verseFor(offset);
+const shareText = (verse = currentVerse()) => `“${verse.text}” — ${verse.ref} (${DATA.translation})`;
+
+let toastTimer = 0;
+function toast(message) {
+  $("toast").textContent = message;
+  $("toast").classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $("toast").classList.remove("show"), 2400);
+}
+
+function copyWithSelection(text) {
+  const area = document.createElement("textarea");
+  area.value = text;
+  area.style.position = "fixed";
+  area.style.opacity = "0";
+  document.body.append(area);
+  area.select();
+  const ok = document.execCommand("copy");
+  area.remove();
+  return ok;
+}
+
+async function copyVerse() {
+  const verse = currentVerse();
+  const text = shareText(verse);
+  let copied = false;
+  try {
+    // A page opened from a file can leave the clipboard request waiting for permission,
+    // so don't wait on it for long.
+    await Promise.race([
+      navigator.clipboard.writeText(text),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 800)),
+    ]);
+    copied = true;
+  } catch {
+    copied = copyWithSelection(text);
+  }
+  toast(copied ? `Copied ${verse.ref}` : `Couldn't copy. Select the verse text to copy ${verse.ref}`);
+}
+
+function wrapLines(ctx, text, maxWidth) {
+  const lines = [];
+  let line = "";
+  for (const word of text.split(/\s+/)) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = word; }
+    else line = test;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+// A 1080×1350 share card in the same style as the page, for the verse on screen.
+async function shareCard(verse = currentVerse(), offsetDays = offset) {
+  const W = 1080, H = 1350;
+  const c = document.createElement("canvas");
+  c.width = W; c.height = H;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "#efe9dc";
+  ctx.fillRect(0, 0, W, H);
+  const img = artImage ?? (artImage = await loadImage(DATA.image));
+  ctx.save();
+  ctx.filter = "grayscale(1) contrast(1.15)";
+  ctx.globalCompositeOperation = "multiply";
+  const sw = img.width * 0.86, sh = sw * (860 / W);
+  ctx.drawImage(img, img.width * 0.08, 0, sw, sh, 0, 40, W, 860);
+  ctx.restore();
+  const fade = ctx.createLinearGradient(0, 700, 0, 900);
+  fade.addColorStop(0, "rgba(239,233,220,0)");
+  fade.addColorStop(1, "rgba(239,233,220,1)");
+  ctx.fillStyle = fade;
+  ctx.fillRect(0, 700, W, 200);
+
+  // Title word.
+  ctx.save();
+  ctx.translate(60, 200);
+  ctx.rotate(-0.05);
+  let size = 170;
+  ctx.font = `${size}px Bangers`;
+  while (ctx.measureText(verse.word).width > W - 160 && size > 70) ctx.font = `${(size -= 6)}px Bangers`;
+  ctx.lineJoin = "round";
+  ctx.fillStyle = "#121110";
+  ctx.fillText(verse.word, 10, 10);
+  ctx.lineWidth = size * 0.09;
+  ctx.strokeStyle = "#121110";
+  ctx.strokeText(verse.word, 0, 0);
+  ctx.fillStyle = "#fffdf7";
+  ctx.fillText(verse.word, 0, 0);
+  ctx.restore();
+
+  // Caption box with the verse, shrinking the text to fit, then sizing the box to the text.
+  const box = { x: 70, y: 880, w: W - 140, h: 330 };
+  let fontSize = 48, lines;
+  do {
+    fontSize -= 2;
+    ctx.font = `700 ${fontSize}px "Comic Neue"`;
+    lines = wrapLines(ctx, verse.text.toUpperCase(), box.w - 80);
+  } while (lines.length * fontSize * 1.3 > box.h - 70 && fontSize > 22);
+  box.h = Math.max(200, Math.round(lines.length * fontSize * 1.3 + 70));
+  ctx.fillStyle = "#121110";
+  ctx.fillRect(box.x + 12, box.y + 12, box.w, box.h);
+  ctx.fillStyle = "#fffdf7";
+  ctx.fillRect(box.x, box.y, box.w, box.h);
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = "#121110";
+  ctx.strokeRect(box.x, box.y, box.w, box.h);
+  ctx.fillStyle = "#121110";
+  lines.forEach((l, i) => ctx.fillText(l, box.x + 40, box.y + 70 + i * fontSize * 1.3));
+  ctx.font = "44px Bangers";
+  const refW = ctx.measureText(verse.ref).width + 40;
+  ctx.fillRect(box.x + 24, box.y - 30, refW, 58);
+  ctx.fillStyle = "#fffdf7";
+  ctx.fillText(verse.ref, box.x + 44, box.y + 14);
+
+  ctx.fillStyle = "#121110";
+  ctx.font = `700 26px "Comic Neue"`;
+  ctx.fillText(`${dateText(offsetDays)} · ${DATA.translation} · verse-ai`, 70, H - 60);
+  return c;
+}
+
+async function saveImage() {
+  const verse = currentVerse();
+  const card = await shareCard(verse, offset);
+  const blob = await new Promise((resolve) => card.toBlob(resolve, "image/png"));
+  const name = `verse-ai-${verse.ref.replace(/[^A-Za-z0-9]+/g, "-")}-${isoDate(offset)}.png`;
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = name;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+  toast(`Saved ${name}`);
+}
+
+async function nativeShare() {
+  const verse = currentVerse();
+  const card = await shareCard(verse, offset);
+  const blob = await new Promise((resolve) => card.toBlob(resolve, "image/png"));
+  const file = new File([blob], "verse.png", { type: "image/png" });
+  const data = { title: verse.ref, text: shareText(verse) };
+  try {
+    await navigator.share(navigator.canShare?.({ files: [file] }) ? { ...data, files: [file] } : data);
+  } catch (err) {
+    if (err.name !== "AbortError") copyVerse();
+  }
+}
+
+function toggleMenu(open = $("shareMenu").hidden) {
+  $("shareMenu").hidden = !open;
+  $("shareBtn").setAttribute("aria-expanded", String(open));
+  if (open) $("copyVerse").focus();
+}
+
+// ---------- Controls ----------
+
+function isTyping(target) {
+  return target instanceof Element && !!target.closest("input, textarea, select, [contenteditable='true']");
 }
 
 function wireControls() {
   $("prev").addEventListener("click", () => go(offset - 1));
   $("next").addEventListener("click", () => go(offset + 1));
-  $("today").addEventListener("click", () => go(0));
-  $("about").addEventListener("click", () => togglePanel());
-  $("closePanel").addEventListener("click", () => togglePanel(false));
+  $("today").addEventListener("click", () => go(todayOffset()));
+  $("contextBtn").addEventListener("click", () => toggleDrawer());
+  $("closeDrawer").addEventListener("click", () => toggleDrawer(false));
+  $("shareBtn").addEventListener("click", () => toggleMenu());
+  $("copyVerse").addEventListener("click", () => { toggleMenu(false); copyVerse(); });
+  $("saveImage").addEventListener("click", () => { toggleMenu(false); saveImage(); });
+  $("nativeShare").hidden = !navigator.share;
+  $("nativeShare").addEventListener("click", () => { toggleMenu(false); nativeShare(); });
+  document.addEventListener("click", (e) => {
+    if (!$("shareMenu").hidden && !e.target.closest(".share")) toggleMenu(false);
+  });
+
   window.addEventListener("keydown", (e) => {
-    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    if (e.altKey || e.ctrlKey || e.metaKey || isTyping(e.target)) return;
+    if (e.key === "Escape") {
+      if (!$("shareMenu").hidden) { toggleMenu(false); $("shareBtn").focus(); } else toggleDrawer(false);
+      return;
+    }
+    if (!$("shareMenu").hidden) return;          // let the menu use the keyboard
     if (e.key === "ArrowLeft") go(offset - 1);
     else if (e.key === "ArrowRight") go(offset + 1);
-    else if (e.key === "t" || e.key === "T" || e.key === "Home") go(0);
-    else if (e.key === "i" || e.key === "I") togglePanel();
-    else if (e.key === "Escape") togglePanel(false);
+    else if (e.key === "t" || e.key === "T" || e.key === "Home") go(todayOffset());
+    else if (e.key === "c" || e.key === "C") toggleDrawer();
     else if (e.key === " " && e.target === document.body) { e.preventDefault(); scene.togglePause(); }
     else return;
   });
+
+  // Editing the #date in the address (or using browser history) moves to that day.
+  window.addEventListener("hashchange", () => {
+    const m = location.hash.match(/^#(\d{4}-\d{2}-\d{2})$/);
+    if (m) go(offsetForIso(m[1]));
+  });
+
+  // Touchscreens: swipe left for the next verse, right for the previous one.
+  let touch = null;
+  window.addEventListener("pointerdown", (e) => {
+    touch = e.pointerType === "touch" && !e.target.closest(".drawer, .controls, .caption") ? { x: e.clientX, y: e.clientY } : null;
+  });
+  window.addEventListener("pointerup", (e) => {
+    if (!touch) return;
+    const dx = e.clientX - touch.x, dy = e.clientY - touch.y;
+    touch = null;
+    if (Math.abs(dx) > 70 && Math.abs(dy) < 60) go(offset + (dx < 0 ? 1 : -1));
+  });
 }
 
+// Small hooks used by the automated browser tests.
+window.verseAI = {
+  ready: false,
+  state: () => ({
+    offset,
+    todayOffset: todayOffset(),
+    iso: isoDate(offset),
+    ref: currentVerse().ref,
+    word: currentVerse().word,
+    shownRef: $("verseRef").textContent,
+    shownText: $("verseText").textContent,
+    shownTitle: $("title").getAttribute("aria-label"),
+    shownDate: $("date").textContent,
+    drawerRef: $("drawerBody").querySelector("h2")?.textContent ?? null,
+    shareText: shareText(),
+    ghosts: document.querySelectorAll(".ghost").length,
+    hash: location.hash,
+  }),
+  verseFor: (o) => verseFor(o).ref,
+  shareCard: async () => (await shareCard()).toDataURL("image/png"),
+  // Hold every animation (text and scene) at `ms` into the current transition, or release with null.
+  freezeAt: (ms) => {
+    frozenTravel = ms === null ? null : Math.min(ms / TRAVEL_MS, 1);
+    for (const a of document.getAnimations()) {
+      if (ms === null) a.play();
+      else { a.pause(); a.currentTime = ms; }
+    }
+  },
+};
+
 if (DATA) {
+  // Reopen on the day in the address (#YYYY-MM-DD), if there is one. Otherwise, a page
+  // built for "today" that is opened on a later day moves on to the real today.
+  const fromHash = location.hash.match(/^#(\d{4}-\d{2}-\d{2})$/);
+  if (fromHash) offset = offsetForIso(fromHash[1]);
+  else if (DATA.startIsToday) offset = todayOffset();
   wireControls();
-  if (PARAMS.has("panel")) document.fonts.ready.then(() => togglePanel(true));
-  start().catch((err) => { console.error(err); showStatic(null); });
+  if (PARAMS.has("panel")) document.fonts.ready.then(() => toggleDrawer(true));
+  start()
+    .catch((err) => { console.error(err); showStatic(); fillText(); })
+    .finally(() => { window.verseAI.ready = true; });
 } else {
   document.body.textContent = "Open this through visual.py, which fills in today's verse.";
-  document.body.style.color = "#ccc";
 }
 </script>
 </body>

@@ -45,6 +45,11 @@ class BuildTests(unittest.TestCase):
         i = tomorrow.toordinal() % len(self.data["daily"])
         self.assertEqual(self.data["daily"][i]["ref"], get_verse(tomorrow).reference)
 
+    def test_page_knows_the_real_date(self):
+        # "Today" must mean the actual date even when the page opens on another day.
+        self.assertEqual(self.data["todayOrdinal"], date.today().toordinal())
+        self.assertEqual(self.data["startOrdinal"], DAY.toordinal())
+
     def test_about_panel_has_notes_context_and_book(self):
         self.assertIn("James 1:19", self.data["notes"])
         start = self.data["start"]
@@ -53,9 +58,10 @@ class BuildTests(unittest.TestCase):
         self.assertIn(31, [n for n, _ in start["context"]])
         self.assertIn("Matthew", self.data["books"])
 
-    def test_artwork_and_font_are_embedded_for_offline_use(self):
+    def test_artwork_and_fonts_are_embedded_for_offline_use(self):
         self.assertTrue(self.data["image"].startswith("data:image/jpeg;base64,"))
-        self.assertTrue(self.data["font"].startswith("data:font/ttf;base64,"))
+        for name in ("bangers", "comicNeue"):
+            self.assertTrue(self.data["fonts"][name].startswith("data:font/ttf;base64,"))
 
     def test_verse_text_cannot_break_out_of_the_script_tag(self):
         self.assertEqual(self.html.count("</script>"), 1)
