@@ -1,1 +1,1 @@
-anthropic>=1.14
+# No third-party packages: verse-ai uses only the Python standard library.

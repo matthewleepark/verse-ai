@@ -1,62 +1,67 @@
-import unittest
-from datetime import date
+﻿import unittest
+from datetime import date, timedelta
 
 import verses
 from bible import lookup
 
 
-class WisdomListTests(unittest.TestCase):
-    def test_every_curated_reference_exists(self):
-        for theme, refs in verses.WISDOM_VERSES.items():
-            for ref in refs:
-                with self.subTest(theme=theme, ref=ref):
-                    self.assertTrue(lookup(ref).text)
+class DailyListTests(unittest.TestCase):
+    def test_every_entry_is_a_real_verse_with_a_title_word(self):
+        for entry in verses.daily_list():
+            with self.subTest(ref=entry["ref"]):
+                self.assertEqual(lookup(entry["ref"]).reference, entry["ref"])
+                self.assertTrue(entry["word"])
+                self.assertEqual(entry["word"], entry["word"].upper())
+
+    def test_no_repeats_for_over_a_year(self):
+        refs = [e["ref"] for e in verses.daily_list()]
+        self.assertEqual(len(refs), len(set(refs)))
+        self.assertGreaterEqual(len(refs), 366)
+
+    def test_all_wisdom_verses_are_in_the_daily_list(self):
+        refs = {e["ref"] for e in verses.daily_list()}
+        for theme_refs in verses.WISDOM_VERSES.values():
+            for ref in theme_refs:
+                self.assertTrue(ref in refs, f"{ref} is missing from data/daily_verses.json")
 
 
-class PickReferenceTests(unittest.TestCase):
+class GetVerseTests(unittest.TestCase):
     def test_same_day_same_verse(self):
-        d = date(2026, 10, 14)
-        self.assertEqual(verses.pick_reference(d), verses.pick_reference(d))
+        d = date(2026, 10, 15)
+        self.assertEqual(verses.get_verse(d), verses.get_verse(d))
 
-    def test_consecutive_days_differ(self):
-        self.assertNotEqual(
-            verses.pick_reference(date(2026, 10, 14)),
-            verses.pick_reference(date(2026, 10, 15)),
-        )
+    def test_a_new_verse_every_day_for_a_year(self):
+        start = date(2026, 1, 1)
+        refs = [verses.get_verse(start + timedelta(days=n)).reference for n in range(366)]
+        self.assertEqual(len(set(refs)), 366)
+
+    def test_verse_has_a_title_word(self):
+        self.assertTrue(verses.get_verse(date(2026, 10, 15)).word)
+
+    def test_wisdom_verses_know_their_theme(self):
+        verse = verses.get_verse(reference="James 1:19")
+        self.assertEqual(verse.theme, "patience")
+        self.assertEqual(verse.word, "LISTEN")
 
     def test_theme_filter(self):
-        theme, ref = verses.pick_reference(date(2026, 1, 1), theme="integrity")
-        self.assertEqual(theme, "integrity")
-        self.assertIn(ref, verses.WISDOM_VERSES["integrity"])
+        verse = verses.get_verse(date(2026, 1, 1), theme="integrity")
+        self.assertIn(verse.reference, verses.WISDOM_VERSES["integrity"])
+        self.assertEqual(verse.theme, "integrity")
 
     def test_unknown_theme(self):
         with self.assertRaises(ValueError):
             verses.pick_reference(theme="astrology")
 
+    def test_reference_outside_the_list_gets_a_default_word(self):
+        verse = verses.get_verse(reference="Genesis 2:7")
+        self.assertEqual(verse.word, "FAITH")
+        self.assertIsNone(verse.theme)
 
-class GetPairTests(unittest.TestCase):
-    def test_same_day_same_pair(self):
-        d = date(2026, 10, 14)
-        self.assertEqual(verses.get_pair(d), verses.get_pair(d))
-
-    def test_main_verse_is_themed_and_partner_differs(self):
-        pair = verses.get_pair(date(2026, 10, 14))
-        self.assertIn(pair.main.theme, verses.THEMES)
-        self.assertNotEqual(pair.main.reference, pair.partner.reference)
-
-    def test_partners_vary_across_days(self):
-        partners = {verses.get_pair(date(2026, 1, 1).replace(day=d)).partner for d in range(1, 29)}
-        self.assertGreater(len(partners), 20)
-
-    def test_specific_reference(self):
-        pair = verses.get_pair(date(2026, 10, 14), reference="John 3:16")
-        self.assertEqual(pair.main.reference, "John 3:16")
-        self.assertIsNone(pair.main.theme)
-
-    def test_shuffle_still_themed(self):
-        pair = verses.get_pair(theme="empathy", shuffle=True)
-        self.assertEqual(pair.main.theme, "empathy")
+    def test_shuffle_with_theme(self):
+        verse = verses.get_verse(theme="empathy", shuffle=True)
+        self.assertIn(verse.reference, verses.WISDOM_VERSES["empathy"])
 
 
 if __name__ == "__main__":
     unittest.main()
+

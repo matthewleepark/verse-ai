@@ -1,81 +1,65 @@
-"""verse-ai command-line entry point.
+"""verse-ai: a free, offline daily Bible study.
 
 Usage:
-    python main.py                      # today's pair, breakdown, then interactive mode
-    python main.py --theme patience     # main verse from one theme
-    python main.py --date 2026-12-25    # the pair for a specific day
-    python main.py --ref "Proverbs 15:1"
-    python main.py --shuffle            # a brand-new random pair right now
-    python main.py --once               # breakdown only, no interactive prompt
-    python main.py --offline            # never contact Claude
+    python main.py                      # today's study, then the interactive prompt
+    python main.py --theme patience     # a wisdom verse on one theme
+    python main.py --date 2026-12-25    # look back at (or ahead to) another day
+    python main.py --ref "Romans 12:9-12"
+    python main.py --shuffle            # a random verse right now
+    python main.py --once               # print today's study and exit
 """
 
 from __future__ import annotations
 
 import argparse
+import os
 import sys
-import textwrap
 from datetime import date
 
-from analysis import AnalysisError, VerseCompanion
-from bible import Verse, VerseNotFoundError
-from interactive import run, stream_print
-from verses import THEMES, DailyPair, get_pair
+import progress
+from bible import VerseNotFoundError
+from display import format_header, format_study
+from interactive import run
+from verses import THEMES, get_verse
 
 
-def _format_verse(label: str, verse: Verse) -> str:
-    body = textwrap.fill(verse.text, width=72, initial_indent="  ", subsequent_indent="  ")
-    return f"{label}: {verse.reference}\n\n{body}\n"
-
-
-def format_pair(pair: DailyPair) -> str:
-    theme = f"  ·  theme: {pair.main.theme}" if pair.main.theme else ""
-    return (
-        f"{_format_verse('TODAY', pair.main)}\n"
-        f"{_format_verse('PAIRED WITH', pair.partner)}\n"
-        f"({pair.main.translation}){theme}\n"
-    )
-
-
-def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(prog="verse-ai", description="A daily verse pair on universal wisdom.")
-    parser.add_argument("--theme", choices=THEMES, help="pick the main verse from one theme")
-    parser.add_argument("--date", type=date.fromisoformat, help="show the pair for YYYY-MM-DD")
-    parser.add_argument("--ref", help='use a specific main verse, e.g. "James 1:19" or "Romans 12:9-12"')
-    parser.add_argument("--shuffle", action="store_true", help="a new random pair instead of today's")
-    parser.add_argument("--once", action="store_true", help="show the breakdown, then exit")
-    parser.add_argument("--offline", action="store_true", help="never contact Claude")
-    return parser.parse_args(argv)
+def add_verse_options(parser: argparse.ArgumentParser) -> None:
+    """Options shared with visual.py for choosing which verse to show."""
+    parser.add_argument("--theme", choices=THEMES, help="a wisdom verse on one theme")
+    parser.add_argument("--date", type=date.fromisoformat, help="the verse for YYYY-MM-DD")
+    parser.add_argument("--ref", help='a specific verse, e.g. "James 1:19" or "Romans 12:9-12"')
+    parser.add_argument("--shuffle", action="store_true", help="a random verse instead of today's")
 
 
 def main(argv: list[str] | None = None) -> int:
-    # Claude's answers can include curly quotes etc.; don't crash on legacy Windows code pages.
     sys.stdout.reconfigure(errors="replace")
-    args = parse_args(argv)
+    if os.name == "nt":
+        import ctypes
+        ctypes.windll.kernel32.SetConsoleTitleW("verse-ai")
+
+    parser = argparse.ArgumentParser(prog="verse-ai", description="A free, offline daily Bible study.")
+    add_verse_options(parser)
+    parser.add_argument("--once", action="store_true", help="print the study, then exit")
+    args = parser.parse_args(argv)
+
+    today = date.today()
+    day = args.date or today
+    tracking = day == today  # streaks only count the real today
+
     try:
-        pair = get_pair(args.date, args.theme, args.ref, args.shuffle)
+        verse = get_verse(day, args.theme, args.ref, args.shuffle)
     except VerseNotFoundError as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
 
-    verses_text = format_pair(pair)
-    print(verses_text)
-
-    companion = VerseCompanion(pair, offline=args.offline)
-    try:
-        companion.breakdown(stream_print)
-        print("\n")
-    except AnalysisError as e:
-        # Previously-seen pairs load from the local cache; otherwise carry on without AI.
-        print(f"(No breakdown: {e})\n")
-        if args.once:
-            return 1
-    except KeyboardInterrupt:
-        print()
-        return 130
+    if tracking:
+        progress.record(day, verse.reference)
+    print(format_header(day, progress.streak(today), progress.studied_on(today), tracking))
+    print()
+    print(format_study(verse, day))
 
     if not args.once:
-        run(companion, verses_text)
+        run(verse, day, tracking)
     return 0
 
 

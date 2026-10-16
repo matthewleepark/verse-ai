@@ -1,6 +1,6 @@
 __pycache__/
 *.pyc
 .venv/
-.env
 journals/
-cache/
+progress.json
+web/today.html

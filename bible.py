@@ -32,6 +32,7 @@ class Verse:
     text: str
     translation: str = TRANSLATION
     theme: str | None = None  # wisdom theme, set by verses.py
+    word: str | None = None   # one-word title for the poster, set by verses.py
 
 
 @lru_cache(maxsize=1)
@@ -60,8 +61,8 @@ def _non_empty_references() -> tuple[str, ...]:
     return tuple(ref for ref, text in load().items() if text)
 
 
-def lookup(reference: str) -> Verse:
-    """Look up "John 3:16" or a range within one chapter like "Romans 12:9-12"."""
+def _resolve(reference: str) -> tuple[str, int, int, int]:
+    """Parse a reference into (canonical book name, chapter, first verse, last verse)."""
     match = _REFERENCE.match(reference)
     if not match:
         raise VerseNotFoundError(
@@ -70,22 +71,49 @@ def lookup(reference: str) -> Verse:
     book, chapter, start, end = match.groups()
     book = " ".join(book.split()).lower()
     book = BOOK_ALIASES.get(book, book)
-    start = int(start)
+    chapter, start = int(chapter), int(start)
     end = int(end) if end else start
     if end < start:
         raise VerseNotFoundError(f"Verse range in {reference!r} runs backwards.")
 
-    index, verses = _index(), load()
+    index = _index()
     keys = [index.get(f"{book} {chapter}:{n}") for n in range(start, end + 1)]
     if None in keys:
         raise VerseNotFoundError(f"Reference not found: {reference!r}")
-    text = " ".join(verses[k] for k in keys if verses[k])
-    if not text:
+    return keys[0].rsplit(" ", 1)[0], chapter, start, end
+
+
+def passage(book: str, chapter: int, start: int = 1, end: int = 176) -> list[tuple[int, str]]:
+    """(verse number, text) for each verse in the range that exists and has text.
+
+    The default range covers a whole chapter (the longest, Psalm 119, has 176 verses).
+    """
+    verses = load()
+    lines = ((n, verses.get(f"{book} {chapter}:{n}")) for n in range(start, end + 1))
+    return [(n, text) for n, text in lines if text]
+
+
+def lookup(reference: str) -> Verse:
+    """Look up "John 3:16" or a range within one chapter like "Romans 12:9-12"."""
+    book, chapter, start, end = _resolve(reference)
+    lines = passage(book, chapter, start, end)
+    if not lines:
         raise VerseNotFoundError(
-            f"{keys[0]} isn't in the earliest manuscripts, so the BSB leaves it out."
+            f"{book} {chapter}:{start} isn't in the earliest manuscripts, so the BSB leaves it out."
         )
-    canonical = keys[0] if start == end else f"{keys[0]}-{end}"
-    return Verse(canonical, text)
+    canonical = f"{book} {chapter}:{start}" + (f"-{end}" if end != start else "")
+    return Verse(canonical, " ".join(text for _, text in lines))
+
+
+def context(reference: str, radius: int = 2) -> list[tuple[int, str]]:
+    """The verses around a reference, within its chapter."""
+    book, chapter, start, end = _resolve(reference)
+    return passage(book, chapter, max(1, start - radius), end + radius)
+
+
+def book_of(reference: str) -> str:
+    """Canonical book name, e.g. "psalms 23:1" -> "Psalm"."""
+    return _resolve(reference)[0]
 
 
 def random_verse(rng: random.Random, exclude: frozenset[str] = frozenset()) -> Verse:

@@ -6,26 +6,22 @@ from datetime import datetime
 from pathlib import Path
 
 from bible import Verse
-from verses import DailyPair
 
 JOURNAL_DIR = Path(__file__).parent / "journals"
 
 
-def _quote(verse: Verse) -> str:
-    return f"> **{verse.reference}** — {verse.text}\n"
-
-
-def format_entry(pair: DailyPair, reflection: str, when: datetime) -> str:
-    theme = f" · {pair.main.theme}" if pair.main.theme else ""
+def format_entry(verse: Verse, reflection: str, when: datetime) -> str:
+    word = f" · {verse.word}" if verse.word else ""
     return (
-        f"## {when:%H:%M} — {pair.main.reference} + {pair.partner.reference}{theme}\n\n"
-        f"{_quote(pair.main)}>\n{_quote(pair.partner)}\n"
+        f"## {when:%H:%M} — {verse.reference}{word}\n\n"
+        f"> {verse.text}\n"
+        f"> — *{verse.translation}*\n\n"
         f"{reflection.strip()}\n\n"
     )
 
 
 def save_entry(
-    pair: DailyPair,
+    verse: Verse,
     reflection: str,
     when: datetime | None = None,
     folder: Path = JOURNAL_DIR,
@@ -40,5 +36,5 @@ def save_entry(
     with path.open("a", encoding="utf-8") as f:
         if is_new:
             f.write(f"# Journal — {when:%A, %B %d, %Y}\n\n")
-        f.write(format_entry(pair, reflection, when))
+        f.write(format_entry(verse, reflection, when))
     return path

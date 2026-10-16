@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>verse-ai · Daily Verse</title>
+<style>
+  :root {
+    --paper: #e6e1d6;
+    --ink: #1a1816;
+    --page: #0e0d0c;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; background: var(--page); }
+  body {
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+  }
+  /* The poster: a 4:5 card that fills the window height (or width on narrow screens). */
+  .poster {
+    position: relative;
+    height: min(100vh, 125vw);
+    aspect-ratio: 4 / 5;
+    container-type: size;
+    background: var(--paper);
+    box-shadow: 0 0 60px rgb(0 0 0 / 0.6);
+    overflow: hidden;
+  }
+  canvas, .fallback-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  canvas { cursor: crosshair; touch-action: none; }
+  .fallback-img { object-fit: cover; object-position: 46% 30%; filter: grayscale(1) contrast(0.85); display: none; }
+  .fallback-title { display: none; }
+  .static .fallback-img { display: block; }
+  .static .fallback-title {
+    display: block;
+    position: absolute;
+    top: 6.5cqh;
+    width: 100%;
+    text-align: center;
+    font: 800 17cqh/1 "Bodoni Moda", "Bodoni MT", Didot, Georgia, serif;
+    opacity: 0.9;
+  }
+
+  /* Top bar: date on the left, controls on the right. */
+  .topbar {
+    position: absolute;
+    top: 2cqh;
+    left: 5cqw;
+    right: 4cqw;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 1.7cqw;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .date small { font-weight: 400; opacity: 0.65; margin-left: 0.8em; }
+  .controls { display: flex; gap: 0.4cqw; }
+  .controls button {
+    font: inherit;
+    letter-spacing: 0.14em;
+    color: var(--ink);
+    background: rgb(230 225 214 / 0.75);
+    border: 1px solid rgb(26 24 22 / 0.35);
+    padding: 0.5cqh 1.1cqw;
+    cursor: pointer;
+  }
+  .controls button:hover, .controls button:focus-visible { background: var(--ink); color: var(--paper); outline: none; }
+  .controls button:disabled { opacity: 0.35; cursor: default; background: rgb(230 225 214 / 0.75); color: var(--ink); }
+
+  .verse {
+    --ts: 1;
+    position: absolute;
+    left: 7cqw;
+    right: 7cqw;
+    bottom: 6cqh;
+    text-align: center;
+    transition: opacity 0.35s ease;
+  }
+  .verse.changing { opacity: 0; }
+  .verse .text {
+    font-size: calc(2.4cqw * var(--ts));
+    font-weight: 700;
+    line-height: 1.3;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+  .verse .ref {
+    margin-top: 1.8cqh;
+    font-family: "Bodoni Moda", "Bodoni MT", Didot, Georgia, serif;
+    font-size: calc(2.8cqw * var(--ts));
+    letter-spacing: 0.4em;
+  }
+  .hint {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 3.4cqh;
+    text-align: center;
+    font-size: 1.25cqw;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    opacity: 0.6;
+    transition: opacity 1.2s ease;
+    pointer-events: none;
+  }
+  .hint.gone { opacity: 0; }
+  .credit {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 1.3cqh;
+    text-align: center;
+    font-size: 1.05cqw;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.5;
+  }
+
+  /* About panel: study notes or background on the book. */
+  .panel {
+    position: absolute;
+    left: 6cqw;
+    right: 6cqw;
+    bottom: 5cqh;
+    max-height: 62cqh;
+    overflow-y: auto;
+    padding: 3.5cqh 4.5cqw;
+    background: rgb(234 229 219 / 0.96);
+    border: 1px solid rgb(26 24 22 / 0.4);
+    box-shadow: 0 1cqh 4cqh rgb(0 0 0 / 0.25);
+    font-size: 1.9cqw;
+    line-height: 1.45;
+    transform: translateY(3cqh);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+  }
+  .panel.open { transform: none; opacity: 1; visibility: visible; }
+  .panel h2 {
+    font-family: "Bodoni Moda", "Bodoni MT", Didot, Georgia, serif;
+    font-size: 3.4cqw;
+    font-weight: 700;
+    margin-bottom: 1.2cqh;
+  }
+  .panel h3 {
+    font-size: 1.5cqw;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin: 2cqh 0 0.6cqh;
+  }
+  .panel .passage { opacity: 0.85; }
+  .panel .passage .num { font-size: 0.7em; font-weight: 700; opacity: 0.55; margin-right: 0.3em; }
+  .panel .passage .here { font-weight: 700; opacity: 1; }
+  .panel .close {
+    position: absolute;
+    top: 1.5cqh;
+    right: 2cqw;
+    font-size: 3cqw;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--ink);
+  }
+</style>
+</head>
+<body>
+<main class="poster" id="poster">
+  <img class="fallback-img" id="fallbackImg" alt="">
+  <canvas id="scene" aria-label="Woodcut of Jesus catching Peter on a moving sea. Click the water to make ripples."></canvas>
+  <div class="fallback-title" id="fallbackTitle"></div>
+
+  <header class="topbar">
+    <span class="date" id="date"></span>
+    <nav class="controls" aria-label="Choose a day">
+      <button id="prev" title="Previous day (←)">‹</button>
+      <button id="today" title="Back to today (T)">Today</button>
+      <button id="next" title="Next day (→)">›</button>
+      <button id="about" title="About this verse (I)">About</button>
+    </nav>
+  </header>
+
+  <section class="verse" id="verseBlock" aria-live="polite">
+    <p class="text" id="verseText"></p>
+    <p class="ref" id="verseRef"></p>
+  </section>
+
+  <aside class="panel" id="panel" aria-label="About this verse">
+    <button class="close" id="closePanel" title="Close (Esc)">×</button>
+    <div id="panelBody"></div>
+  </aside>
+
+  <p class="hint" id="hint">Click the water · Arrow keys change the day · I for notes · Space pauses</p>
+  <footer class="credit">Art: Julius Schnorr von Carolsfeld, 1860 · public domain &nbsp;·&nbsp; <span id="translation"></span></footer>
+</main>
+
+<script>
+// visual.py replaces the next line with the verses, the artwork and the font.
+const DATA = /*__VERSE_DATA__*/null;
+
+// Outline around Jesus, Peter and the boat (fractions of the artwork's width/height).
+// Everything inside stays perfectly still; only the sea outside it moves.
+const FIGURE = [
+  [0.210, 0.198], [0.280, 0.144], [0.305, 0.102], [0.350, 0.066], [0.415, 0.051], [0.4525, 0.072],
+  [0.4575, 0.138], [0.4675, 0.198], [0.500, 0.246], [0.560, 0.228], [0.550, 0.000], [0.645, 0.000],
+  [0.6725, 0.138], [0.735, 0.162], [0.850, 0.135], [0.885, 0.180], [1.000, 0.252],
+  [1.000, 0.540], [0.990, 0.600], [0.980, 0.780], [0.800, 0.792], [0.675, 0.780], [0.640, 0.888],
+  [0.575, 0.912], [0.450, 0.900], [0.400, 0.936], [0.380, 0.984], [0.280, 1.000], [0.180, 1.000],
+  [0.140, 0.936], [0.125, 0.768], [0.120, 0.600], [0.100, 0.432], [0.130, 0.372],
+];
+const HORIZON = 0.25;           // where the sea meets the sky in the artwork
+const ART_HEIGHT = 0.84;        // share of the poster's height the artwork fills
+const FOCUS = [0.46, 0.5];      // which part of the artwork to keep when cropping
+const MAX_RIPPLES = 12;
+// Testing switches: ?nograin  ?t=SECONDS (freeze time)  ?ripple=X,Y (artwork coords)  ?panel
+const PARAMS = new URLSearchParams(location.search);
+
+const VERTEX = `#version 300 es
+in vec2 aPos;
+out vec2 vUv;
+void main() {
+  vUv = vec2(aPos.x + 1.0, 1.0 - aPos.y) * 0.5;   // 0..1, y pointing down
+  gl_Position = vec4(aPos, 0.0, 1.0);
+}`;
+
+const FRAGMENT = `#version 300 es
+precision highp float;
+in vec2 vUv;
+out vec4 outColor;
+uniform sampler2D uImage, uMask, uTitle;
+uniform vec2 uRes;
+uniform vec4 uCrop;      // visible part of the artwork: x, y, width, height
+uniform float uTime, uHorizon, uArtHeight, uGrain, uImgAspect;
+uniform vec4 uRipples[${MAX_RIPPLES}];   // x, y (artwork coords), start time, strength
+
+float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+
+void main() {
+  // The artwork fills the top of the poster; below it the sea is mirrored, like a reflection.
+  vec2 iuv = uCrop.xy + vec2(vUv.x, vUv.y / uArtHeight) * uCrop.zw;
+  if (iuv.y > 1.0) iuv.y = 2.0 - iuv.y;
+  float figure = texture(uMask, iuv).r;
+
+  // How much of this pixel is open water: none above the horizon or inside the figures.
+  float water = smoothstep(0.0, 0.06, iuv.y - uHorizon) * (1.0 - figure);
+  float depth = clamp((iuv.y - uHorizon) / (1.0 - uHorizon), 0.0, 1.0);
+
+  // Layered travelling waves; tighter and calmer toward the horizon for perspective.
+  float persp = mix(2.6, 1.0, depth);
+  float t = uTime;
+  float swell = sin(iuv.y * 38.0 * persp - t * 1.1 + sin(iuv.x * 5.0 + t * 0.35) * 2.2);
+  float chop = sin(iuv.y * 95.0 * persp + iuv.x * 14.0 - t * 2.3) * 0.45
+             + sin(iuv.x * 31.0 * persp - iuv.y * 22.0 + t * 1.6) * 0.35;
+  vec2 disp = vec2(chop * 0.55 + swell * 0.25, swell * 0.8 + chop * 0.3) * mix(0.0012, 0.0065, depth);
+
+  // Ripples from clicks and the mouse: expanding rings that fade as they spread.
+  float glint = smoothstep(0.75, 1.0, swell * 0.6 + chop * 0.5) * 0.10;
+  for (int i = 0; i < ${MAX_RIPPLES}; i++) {
+    vec4 r = uRipples[i];
+    float age = t - r.z;
+    if (r.w <= 0.0 || age < 0.0 || age > 5.0) continue;
+    vec2 dv = (iuv - r.xy) * vec2(uImgAspect, 1.0);
+    float d = length(dv);
+    float band = d - age * 0.16;
+    float wave = sin(band * 150.0) * exp(-band * band * 700.0) * exp(-age * 0.9) * r.w;
+    disp += (dv / max(d, 1e-4)) / vec2(uImgAspect, 1.0) * wave * 0.010;
+    glint += max(wave, 0.0) * 0.22;
+  }
+
+  float lum = dot(texture(uImage, iuv + disp * water).rgb, vec3(0.299, 0.587, 0.114));
+  lum += glint * water;
+
+  // Faded print: lift the blacks, dim the whites, tint like old paper.
+  vec3 paper = vec3(0.90, 0.88, 0.84);
+  vec3 ink = vec3(0.10, 0.095, 0.09);
+  vec3 col = mix(ink, paper, mix(0.14, 0.95, clamp(lum, 0.0, 1.0)));
+
+  // Title letters pass behind Jesus (the left half of the artwork) but over the boat.
+  // They stay faintly visible through him so long words remain readable.
+  float behind = figure * (1.0 - smoothstep(0.50, 0.54, iuv.x)) * 0.72;
+  float title = texture(uTitle, vUv).a * (1.0 - behind);
+  col = mix(col, ink * 0.85, title * 0.93);
+
+  // Wash the bottom so the verse is readable, then vignette and film grain.
+  col = mix(col, paper, smoothstep(uArtHeight - 0.16, uArtHeight + 0.04, vUv.y) * 0.72);
+  col = mix(col, paper, smoothstep(0.05, 0.0, vUv.y) * 0.6);
+  float v = length((vUv - 0.5) * vec2(1.0, 0.9));
+  col *= 1.0 - smoothstep(0.45, 0.85, v) * 0.35;
+  col += (hash(vUv * uRes + fract(t * 7.0) * 100.0) - 0.5) * 0.10 * uGrain;
+
+  outColor = vec4(col, 1.0);
+}`;
+
+const $ = (id) => document.getElementById(id);
+const DAY_MS = 86400000;
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July",
+                "August", "September", "October", "November", "December"];
+const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+// ---------- Which verse is showing ----------
+
+let offset = 0;   // days away from the day the poster was opened for
+
+function verseFor(offsetDays) {
+  // The day the poster opened on may be a custom verse (--ref, --theme, --shuffle).
+  if (offsetDays === 0) return DATA.start;
+  const list = DATA.daily;
+  const i = (((DATA.startOrdinal + offsetDays) % list.length) + list.length) % list.length;
+  return list[i];
+}
+
+function dateLabel(offsetDays) {
+  const [y, m, d] = DATA.startDate.split("-").map(Number);
+  const day = new Date(Date.UTC(y, m - 1, d) + offsetDays * DAY_MS);
+  const text = `${WEEKDAYS[day.getUTCDay()]} · ${day.getUTCDate()} ${MONTHS[day.getUTCMonth()]} ${day.getUTCFullYear()}`;
+  const isToday = DATA.startIsToday && offsetDays === 0;
+  return { text, badge: isToday ? "Today" : "" };
+}
+
+function fillText() {
+  const verse = verseFor(offset);
+  const label = dateLabel(offset);
+  $("date").innerHTML = "";
+  $("date").append(label.text);
+  if (label.badge) {
+    const badge = document.createElement("small");
+    badge.textContent = label.badge;
+    $("date").append(badge);
+  }
+  $("verseText").textContent = verse.text;
+  $("verseRef").textContent = verse.ref;
+  $("translation").textContent = DATA.translation;
+  $("fallbackTitle").textContent = verse.word;
+  $("today").disabled = offset === 0;
+  // Long passages: shrink the text until the block fits in the bottom third.
+  const block = $("verseBlock");
+  let scale = 1;
+  block.style.setProperty("--ts", scale);
+  while (block.offsetHeight > $("poster").offsetHeight * 0.30 && scale > 0.55) {
+    scale -= 0.05;
+    block.style.setProperty("--ts", scale);
+  }
+  if ($("panel").classList.contains("open")) fillPanel();
+}
+
+function fillPanel() {
+  const verse = verseFor(offset);
+  const body = $("panelBody");
+  body.innerHTML = "";
+  const add = (tag, text, cls) => {
+    const el = document.createElement(tag);
+    el.textContent = text;
+    if (cls) el.className = cls;
+    body.append(el);
+    return el;
+  };
+  add("h2", verse.ref);
+  const notes = DATA.notes[verse.ref];
+  if (notes) {
+    add("h3", "Universal wisdom"); add("p", notes.wisdom);
+    add("h3", "Historical context"); add("p", notes.context);
+    add("h3", "Theological meaning"); add("p", notes.meaning);
+  }
+  if (verse.context && verse.context.length) {
+    add("h3", "In context");
+    const p = add("p", "", "passage");
+    const [first, last] = verse.range;
+    for (const [n, text] of verse.context) {
+      const num = document.createElement("span");
+      num.className = "num";
+      num.textContent = n;
+      const line = document.createElement("span");
+      if (n >= first && n <= last) line.className = "here";
+      line.textContent = text + " ";
+      p.append(num, line);
+    }
+  }
+  const book = DATA.books[verse.book];
+  if (book) {
+    add("h3", `About ${verse.book === "Psalm" ? "Psalms" : verse.book}`);
+    add("p", `${book.about} Author: ${book.author}. Date: ${book.date}.`);
+  }
+}
+
+function togglePanel(open = !$("panel").classList.contains("open")) {
+  if (open) fillPanel();
+  $("panel").classList.toggle("open", open);
+}
+
+// ---------- Drawing ----------
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+function makeMaskCanvas(img) {
+  const w = 1024, h = Math.round(1024 * img.height / img.width);
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, w, h);
+  ctx.filter = `blur(${w * 0.012}px)`;
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  // Push points on the artwork's border slightly outside so the blur doesn't fade them.
+  const out = (v) => (v <= 0 ? -0.05 : v >= 1 ? 1.05 : v);
+  FIGURE.forEach(([x, y], i) => ctx[i ? "lineTo" : "moveTo"](out(x) * w, out(y) * h));
+  ctx.closePath();
+  ctx.fill();
+  return c;
+}
+
+function makeTitleCanvas(w, h, word) {
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  const ctx = c.getContext("2d");
+  const maxWidth = w * 0.92;
+  // Size the word to span the poster, keeping its capitals between 12% and 20% of the height.
+  const capRatio = 0.7;
+  ctx.font = `800 100px "Bodoni Moda"`;
+  let size = (maxWidth / ctx.measureText(word).width) * 100;
+  size = Math.min(size, (h * 0.20) / capRatio);
+  size = Math.max(size, (h * 0.12) / capRatio);
+  ctx.font = `800 ${size}px "Bodoni Moda"`;
+  const squeeze = Math.min(1, maxWidth / ctx.measureText(word).width);   // condense long words
+  ctx.fillStyle = "#fff";
+  ctx.textAlign = "center";
+  ctx.translate(w / 2, h * 0.065 + size * capRatio);
+  ctx.scale(squeeze, 1);
+  ctx.fillText(word, 0, 0);
+  return c;
+}
+
+function cropFor(canvasAspect, imgAspect) {
+  if (canvasAspect < imgAspect) {
+    const w = canvasAspect / imgAspect;
+    return [Math.min(Math.max(FOCUS[0] - w / 2, 0), 1 - w), 0, w, 1];
+  }
+  const h = imgAspect / canvasAspect;
+  return [0, Math.min(Math.max(FOCUS[1] - h / 2, 0), 1 - h), 1, h];
+}
+
+function compile(gl, type, source) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(shader));
+  return shader;
+}
+
+function texture(gl, unit, source, mipmaps) {
+  const tex = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE0 + unit);
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  if (mipmaps) {
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  } else {
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  }
+  return tex;
+}
+
+// Set up by start(); the controls call these.
+let scene = { redrawTitle() {}, ripple() {}, render() {}, togglePause() {} };
+
+function showStatic(img) {
+  $("poster").classList.add("static");
+  $("fallbackImg").src = img ? img.src : DATA.image;
+  $("scene").style.display = "none";
+  $("hint").textContent = "Arrow keys change the day · I for notes";
+  fillText();
+}
+
+async function start() {
+  const font = new FontFace("Bodoni Moda", `url(${DATA.font})`, { weight: "400 900" });
+  document.fonts.add(await font.load());
+  fillText();
+
+  const img = await loadImage(DATA.image);
+  const canvas = $("scene");
+  // preserveDrawingBuffer keeps a frozen frame on screen between redraws.
+  const gl = canvas.getContext("webgl2", { antialias: false, preserveDrawingBuffer: true });
+  if (!gl) return showStatic(img);
+
+  let program;
+  try {
+    program = gl.createProgram();
+    gl.attachShader(program, compile(gl, gl.VERTEX_SHADER, VERTEX));
+    gl.attachShader(program, compile(gl, gl.FRAGMENT_SHADER, FRAGMENT));
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program));
+  } catch (err) {
+    console.error(err);
+    return showStatic(img);
+  }
+  gl.useProgram(program);
+
+  // One triangle that covers the whole canvas.
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(program, "aPos");
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+  const u = (name) => gl.getUniformLocation(program, name);
+  const imgAspect = img.width / img.height;
+  texture(gl, 0, img, true);
+  texture(gl, 1, makeMaskCanvas(img), false);
+  gl.uniform1i(u("uImage"), 0);
+  gl.uniform1i(u("uMask"), 1);
+  gl.uniform1i(u("uTitle"), 2);
+  gl.uniform1f(u("uHorizon"), HORIZON);
+  gl.uniform1f(u("uArtHeight"), ART_HEIGHT);
+  gl.uniform1f(u("uImgAspect"), imgAspect);
+  gl.uniform1f(u("uGrain"), PARAMS.has("nograin") ? 0 : 1);
+
+  // A clock that stops while paused, so the waves and ripples freeze together.
+  const fixedTime = PARAMS.has("t") ? Number(PARAMS.get("t")) : null;
+  const still = fixedTime !== null || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let paused = false;
+  let clock = fixedTime ?? 0;
+  let last = performance.now();
+
+  const ripples = new Float32Array(MAX_RIPPLES * 4);
+  let nextRipple = 0;
+  let crop = [0, 0, 1, 1];
+
+  const draw = () => {
+    gl.uniform1f(u("uTime"), clock);
+    gl.uniform4fv(u("uRipples"), ripples);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  };
+
+  let titleTex = null;
+  function redrawTitle() {
+    if (titleTex) gl.deleteTexture(titleTex);
+    titleTex = texture(gl, 2, makeTitleCanvas(canvas.width, canvas.height, verseFor(offset).word), false);
+    if (still || paused) draw();
+  }
+
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(canvas.clientWidth * dpr);
+    canvas.height = Math.round(canvas.clientHeight * dpr);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(u("uRes"), canvas.width, canvas.height);
+    crop = cropFor(canvas.width / (canvas.height * ART_HEIGHT), imgAspect);
+    gl.uniform4fv(u("uCrop"), crop);
+    fillText();
+    redrawTitle();
+    // Resizing clears the canvas, so a frozen scene must be redrawn here.
+    if (still || paused) draw();
+  }
+
+  // Turn a point on the canvas into artwork coordinates (matching the shader).
+  function toArtwork(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const vx = (clientX - rect.left) / rect.width;
+    const vy = (clientY - rect.top) / rect.height;
+    let ix = crop[0] + vx * crop[2];
+    let iy = crop[1] + (vy / ART_HEIGHT) * crop[3];
+    if (iy > 1) iy = 2 - iy;
+    return [ix, iy];
+  }
+
+  function ripple(clientX, clientY, strength) {
+    if (still) return;
+    const [x, y] = toArtwork(clientX, clientY);
+    ripples.set([x, y, clock, strength], nextRipple * 4);
+    nextRipple = (nextRipple + 1) % MAX_RIPPLES;
+    $("hint").classList.add("gone");
+  }
+
+  function togglePause() {
+    if (still) return;
+    paused = !paused;
+    last = performance.now();
+  }
+
+  scene = { redrawTitle, ripple, render: draw, togglePause };
+  if (PARAMS.has("ripple")) ripples.set([...PARAMS.get("ripple").split(",").map(Number), 0, 1], 0);
+  resize();
+  window.addEventListener("resize", resize);
+
+  // Clicks make strong ripples; moving across the water leaves a gentle wake.
+  let lastWake = 0;
+  canvas.addEventListener("pointerdown", (e) => ripple(e.clientX, e.clientY, 1.0));
+  canvas.addEventListener("pointermove", (e) => {
+    const now = performance.now();
+    if (now - lastWake > 140) {
+      lastWake = now;
+      ripple(e.clientX, e.clientY, e.buttons ? 0.7 : 0.25);
+    }
+  });
+
+  if (!still) {
+    const frame = (now) => {
+      if (!paused) clock += Math.min(now - last, 100) / 1000;
+      last = now;
+      draw();
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  }
+}
+
+// ---------- Controls ----------
+
+function go(newOffset) {
+  if (newOffset === offset) return;
+  const block = $("verseBlock");
+  block.classList.add("changing");
+  setTimeout(() => {
+    offset = newOffset;
+    fillText();
+    scene.redrawTitle();
+    block.classList.remove("changing");
+  }, 200);
+}
+
+function wireControls() {
+  $("prev").addEventListener("click", () => go(offset - 1));
+  $("next").addEventListener("click", () => go(offset + 1));
+  $("today").addEventListener("click", () => go(0));
+  $("about").addEventListener("click", () => togglePanel());
+  $("closePanel").addEventListener("click", () => togglePanel(false));
+  window.addEventListener("keydown", (e) => {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    if (e.key === "ArrowLeft") go(offset - 1);
+    else if (e.key === "ArrowRight") go(offset + 1);
+    else if (e.key === "t" || e.key === "T" || e.key === "Home") go(0);
+    else if (e.key === "i" || e.key === "I") togglePanel();
+    else if (e.key === "Escape") togglePanel(false);
+    else if (e.key === " " && e.target === document.body) { e.preventDefault(); scene.togglePause(); }
+    else return;
+  });
+}
+
+if (DATA) {
+  wireControls();
+  if (PARAMS.has("panel")) document.fonts.ready.then(() => togglePanel(true));
+  start().catch((err) => { console.error(err); showStatic(null); });
+} else {
+  document.body.textContent = "Open this through visual.py, which fills in today's verse.";
+  document.body.style.color = "#ccc";
+}
+</script>
+</body>
+</html>

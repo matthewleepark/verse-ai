@@ -1,26 +1,27 @@
-"""Interactive prompt: ask follow-ups, get a summary, or write a journal entry.
-
-Journaling and re-showing the verses work offline; questions need Claude.
-"""
+"""Interactive prompt for the daily study: read, context, journal, history, poster."""
 
 from __future__ import annotations
 
-from analysis import AnalysisError, VerseCompanion
+from datetime import date
+
+import bible
+import progress
+import study
+from bible import Verse
+from display import format_history, format_passage, format_study, format_verse, verse_range
 from journal import save_entry
 
 HELP = """\
 Commands:
-  <any question>   ask about today's verses (needs internet)
-  summary          quick summary of the pair and this conversation (needs internet)
-  journal          write a reflection (saved to journals/)
-  verse            show today's verses again
-  help             show this list
-  quit             exit
+  read       today's chapter of Proverbs (counts toward your streak)
+  context    the verses around today's verse
+  journal    write a reflection (saved to journals/, counts toward your streak)
+  poster     open today's verse as an animated poster in your browser
+  history    your streak and past days
+  study      show today's study again
+  help       show this list
+  quit       exit
 """
-
-
-def stream_print(chunk: str) -> None:
-    print(chunk, end="", flush=True)
 
 
 def read_reflection() -> str:
@@ -34,26 +35,48 @@ def read_reflection() -> str:
     return "\n".join(lines)
 
 
-def run(companion: VerseCompanion, verses_text: str) -> None:
+def run(verse: Verse, day: date, tracking: bool) -> None:
+    """tracking=False when looking back at another day: nothing counts toward the streak."""
+
+    def mark(**flags: bool) -> None:
+        if not tracking:
+            return
+        already_counted = progress.studied_on(day)
+        progress.record(day, verse.reference, **flags)
+        if not already_counted:
+            n = progress.streak(day)
+            print(f"Today counts! Streak: {n} day{'s' * (n != 1)}.\n")
+
     print(HELP)
     while True:
         try:
             # Windows PowerShell prefixes piped input with a byte-order mark.
-            command = input("verse-ai> ").strip().lstrip("﻿")
+            command = input("verse-ai> ").strip().lstrip("﻿").lower()
         except (EOFError, KeyboardInterrupt):
             print()
             return
 
-        lowered = command.lower()
         if not command:
             continue
-        if lowered in {"quit", "exit", "q"}:
+        if command in {"quit", "exit", "q"}:
             return
-        if lowered == "help":
+        if command == "help":
             print(HELP)
-        elif lowered in {"verse", "verses"}:
-            print(verses_text)
-        elif lowered == "journal":
+        elif command == "study":
+            print(format_study(verse, day))
+        elif command == "verse":
+            print(format_verse(verse))
+        elif command == "read":
+            book, chapter = study.reading_for(day)
+            print(f"\n{book.upper()} {chapter}\n")
+            print(format_passage(bible.passage(book, chapter)))
+            print()
+            mark(read=True)
+        elif command == "context":
+            print(f"\n{verse.reference} in context\n")
+            print(format_passage(bible.context(verse.reference, radius=4), verse_range(verse.reference)))
+            print()
+        elif command == "journal":
             try:
                 reflection = read_reflection()
             except (EOFError, KeyboardInterrupt):
@@ -62,21 +85,14 @@ def run(companion: VerseCompanion, verses_text: str) -> None:
             if not reflection:
                 print("Nothing written, so nothing saved.\n")
                 continue
-            path = save_entry(companion.pair, reflection)
-            print(f"Saved to {path}\n")
-        elif lowered == "summary":
-            respond(lambda: companion.summary(stream_print))
+            path = save_entry(verse, reflection)
+            print(f"Saved to {path}")
+            mark(journaled=True)
+        elif command == "poster":
+            import visual  # only needed for this command
+            visual.open_poster(verse, day)
+            print("Opened the poster in your browser.\n")
+        elif command == "history":
+            print(format_history(progress.history(), progress.streak(date.today())))
         else:
-            respond(lambda: companion.ask(command, stream_print))
-
-
-def respond(call) -> None:
-    """Run one streamed Claude turn, keeping the prompt alive on errors or Ctrl+C."""
-    print()
-    try:
-        call()
-    except AnalysisError as e:
-        print(f"\n{e}")
-    except KeyboardInterrupt:
-        print("\n(interrupted)")
-    print("\n")
+            print(f"Unknown command {command!r}. Type 'help' to see the commands.\n")

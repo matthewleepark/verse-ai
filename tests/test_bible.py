@@ -49,6 +49,28 @@ class LookupTests(unittest.TestCase):
             lookup("Matthew 17:21")
 
 
+class PassageTests(unittest.TestCase):
+    def test_context_surrounds_the_verse(self):
+        numbers = [n for n, _ in bible.context("James 1:19", radius=2)]
+        self.assertEqual(numbers, [17, 18, 19, 20, 21])
+
+    def test_context_stops_at_chapter_start(self):
+        numbers = [n for n, _ in bible.context("Genesis 1:1", radius=2)]
+        self.assertEqual(numbers, [1, 2, 3])
+
+    def test_whole_chapter(self):
+        self.assertEqual(len(bible.passage("Psalm", 119)), 176)
+        self.assertEqual(len(bible.passage("Proverbs", 14)), 35)
+
+    def test_passage_skips_omitted_verses(self):
+        numbers = [n for n, _ in bible.passage("Matthew", 17, 20, 22)]
+        self.assertEqual(numbers, [20, 22])
+
+    def test_book_of(self):
+        self.assertEqual(bible.book_of("psalms 23:1"), "Psalm")
+        self.assertEqual(bible.book_of("1 John 3:17"), "1 John")
+
+
 class RandomVerseTests(unittest.TestCase):
     def test_seeded_rng_is_repeatable(self):
         self.assertEqual(random_verse(random.Random(42)), random_verse(random.Random(42)))

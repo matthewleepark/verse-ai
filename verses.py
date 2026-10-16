@@ -1,16 +1,23 @@
-"""Choosing each day's pair: a curated wisdom verse + a random partner verse.
+"""Choosing each day's verse.
 
-The wisdom verse keeps every day on theme; the partner comes from anywhere in
-the Bible (~31,000 verses), so the combinations practically never repeat.
+data/daily_verses.json lists 415 verses, each with a one-word title for the
+poster. Day N of the calendar gets entry N % 415, so the verse changes every
+day and doesn't repeat for over a year. The 40 wisdom verses below (which have
+study notes) are part of that list and can also be picked by theme.
 """
 
 from __future__ import annotations
 
+import json
 import random
-from dataclasses import dataclass, replace
+from dataclasses import replace
 from datetime import date
+from functools import lru_cache
+from pathlib import Path
 
-from bible import Verse, lookup, random_verse
+from bible import Verse, lookup
+
+DAILY_FILE = Path(__file__).parent / "data" / "daily_verses.json"
 
 WISDOM_VERSES: dict[str, list[str]] = {
     "patience": [
@@ -66,40 +73,54 @@ WISDOM_VERSES: dict[str, list[str]] = {
 THEMES = list(WISDOM_VERSES)
 
 
-@dataclass(frozen=True)
-class DailyPair:
-    main: Verse     # the wisdom verse (or the one asked for with --ref)
-    partner: Verse  # random verse from anywhere in the Bible
+@lru_cache(maxsize=1)
+def daily_list() -> list[dict[str, str]]:
+    """[{"ref": "Isaiah 43:2", "word": "WATERS"}, ...] in calendar order."""
+    with DAILY_FILE.open(encoding="utf-8") as f:
+        return json.load(f)
 
 
-def _pool(theme: str | None) -> list[tuple[str, str]]:
+@lru_cache(maxsize=1)
+def _words() -> dict[str, str]:
+    return {entry["ref"]: entry["word"] for entry in daily_list()}
+
+
+def theme_of(reference: str) -> str | None:
+    return next((t for t, refs in WISDOM_VERSES.items() if reference in refs), None)
+
+
+def entry_for(day: date) -> dict[str, str]:
+    entries = daily_list()
+    return entries[day.toordinal() % len(entries)]
+
+
+def pick_reference(day: date | None = None, theme: str | None = None) -> str:
+    """The day's reference: from the daily list, or from one wisdom theme."""
+    day = day or date.today()
     if theme is None:
-        return [(t, ref) for t, refs in WISDOM_VERSES.items() for ref in refs]
+        return entry_for(day)["ref"]
     if theme not in WISDOM_VERSES:
         raise ValueError(f"Unknown theme {theme!r}. Choose from: {', '.join(THEMES)}")
-    return [(theme, ref) for ref in WISDOM_VERSES[theme]]
+    refs = WISDOM_VERSES[theme]
+    return refs[day.toordinal() % len(refs)]
 
 
-def pick_reference(day: date | None = None, theme: str | None = None) -> tuple[str, str]:
-    """Deterministically pick (theme, reference) for a given day."""
-    day = day or date.today()
-    pool = _pool(theme)
-    return pool[day.toordinal() % len(pool)]
-
-
-def get_pair(
+def get_verse(
     day: date | None = None,
     theme: str | None = None,
     reference: str | None = None,
     shuffle: bool = False,
-) -> DailyPair:
-    """Build the day's pair. Same day -> same pair, unless shuffle=True."""
-    day = day or date.today()
-    rng = random.Random() if shuffle else random.Random(day.toordinal())
+) -> Verse:
+    """The verse to study. Same day -> same verse, unless shuffle=True."""
     if reference:
-        main = lookup(reference)
+        verse = lookup(reference)
+    elif shuffle:
+        pool = WISDOM_VERSES[theme] if theme else [e["ref"] for e in daily_list()]
+        verse = lookup(random.choice(pool))
     else:
-        chosen_theme, ref = rng.choice(_pool(theme)) if shuffle else pick_reference(day, theme)
-        main = replace(lookup(ref), theme=chosen_theme)
-    partner = random_verse(rng, exclude=frozenset({main.reference}))
-    return DailyPair(main, partner)
+        verse = lookup(pick_reference(day, theme))
+    return replace(
+        verse,
+        theme=theme_of(verse.reference),
+        word=_words().get(verse.reference, "FAITH"),
+    )
