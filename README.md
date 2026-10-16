@@ -19,7 +19,9 @@ A free, offline daily Bible study. It needs no internet, no account and no API k
 
 ## The poster
 
-Double-click **verse-ai poster**, or run `python visual.py`. It opens full screen in your browser, styled like a page from an old engraved Bible. A woodcut of Jesus catching Peter stands on a gently moving sea, drawn in fine engraved lines on warm parchment, with golden rays of light behind Jesus. The day's title word is set in Cormorant Garamond. The verse sits in a manuscript-style frame with a gold initial capital, set in EB Garamond.
+Double-click **verse-ai poster**, or run `python visual.py`. It opens full screen in your browser as one still film frame: the Sea of Galilee at the fourth watch of the night, before dawn. The engraved sea is charcoal dark, with a crimson-amber glow on the horizon and one warm light, the halo behind Jesus. That light falls on the 1860 woodcut of Jesus catching Peter and lays a path of gold across the water.
+
+The day's verse is the centrepiece. It's set large in warm ivory EB Garamond directly on the dark sea, with a gold initial and its reference in gold small capitals. The title word above is in tracked gold-leaf Cormorant Garamond.
 
 | Do this | What happens |
 |---|---|
@@ -36,7 +38,7 @@ Double-click **verse-ai poster**, or run `python visual.py`. It opens full scree
 
 - **Going forward:** the old title drifts toward you and dissolves while the next one rises out of the depth, letter by letter from left to right.
 - **Going back:** the old title recedes into the distance while the previous one comes forward, letter by letter from right to left.
-- **The scene:** it glides in the direction of travel, with near waves moving more than far ones, as a warm band of golden light and a few gold motes sweep across. Each verse has its own sky, and the sky blends from one to the next.
+- **The scene:** it moves like one camera move. The sea slides in the direction of travel, with near waves moving more than far ones, and the camera eases very slightly in going forward and out going back. The exposure dips for a moment as a soft amber light crosses the frame. Each verse has its own sky, which blends from one to the next.
 - **The verse text:** it only crossfades with a small slide, so it stays easy to read.
 
 If your system is set to reduce motion, verse changes become a short fade.

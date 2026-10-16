@@ -3,139 +3,190 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0b0a0b">
 <title>verse-ai · Daily Verse</title>
 <style>
+  /* "The Fourth Watch": an engraving printed in darkness, lit by one light. */
   :root {
-    --parchment: #efe4cc;
-    --vellum: #f7efdc;
-    --ink: #2b1d11;
-    --ink-soft: #5a4630;
-    --gold: #a8802f;
-    --gold-light: #d6b45e;
+    --night: #0b0a0b;
+    --charcoal: #141215;
+    --bone: #efe6d2;
+    --bone-soft: #d9cfbd;
+    --bone-dim: #cbbd9f;
+    --ash: #b9a98c;
+    --muted: #857a68;
+    --disabled: #766b5b;
+    --gold: #d4a24c;
+    --gold-hi: #f1d79a;
+    --gold-lo: #9c7433;
+    --crimson: #8a2a22;
+    --crimson-text: #c25a4c;
+    --crimson-wash: rgb(138 42 34 / 0.26);
+    --gx: clamp(20px, 5.5vw, 104px);
+    --gy: clamp(24px, 6.5vh, 72px);
   }
   * { box-sizing: border-box; margin: 0; }
-  html, body { height: 100%; background: var(--parchment); overflow: hidden; }
-  body { font-family: "EB Garamond", Garamond, Georgia, serif; color: var(--ink); }
+  html, body { height: 100%; background: var(--night); color: var(--bone); overflow: hidden; }
+  body { font-family: "EB Garamond", Garamond, Georgia, serif; }
+  ::selection { background: rgb(138 42 34 / 0.6); color: #fff6e6; }
 
   canvas, .fallback-img { position: fixed; inset: 0; width: 100vw; height: 100vh; }
   canvas { cursor: crosshair; touch-action: none; }
-  .fallback-img { object-fit: contain; object-position: 58% 100%; filter: sepia(0.5); display: none; }
+  .fallback-img { object-fit: contain; object-position: 63% 100%; filter: grayscale(1) sepia(0.6) brightness(0.55) contrast(1.15); display: none; }
   .static .fallback-img { display: block; }
+  body.static::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at 60% 35%, transparent 30%, rgb(7 6 7 / 0.85) 100%);
+  }
 
-  /* ---------- Top: date, title word, controls ---------- */
+  /* ---------- Top left: the date and the title word, like a film title ---------- */
   .heading {
     position: fixed;
-    top: clamp(16px, 3vh, 40px);
-    left: clamp(18px, 3.5vw, 64px);
+    top: var(--gy);
+    left: var(--gx);
     pointer-events: none;
+    z-index: 2;
   }
   .date {
     display: inline-flex;
     align-items: center;
-    gap: 0.7em;
-    font-size: clamp(14px, 1.15vw, 21px);
-    font-variant: small-caps;
-    letter-spacing: 0.14em;
-    color: var(--ink);
-    background: rgb(247 239 220 / 0.9);
-    padding: 2px 12px 3px 0;
-    box-shadow: 0 0 14px 6px rgb(247 239 220 / 0.9);
+    gap: 0.9em;
+    font-size: clamp(13px, 0.95vw, 17px);
+    font-variant-caps: all-small-caps;
+    font-feature-settings: "onum";
+    letter-spacing: 0.24em;
+    color: var(--ash);
+    text-shadow: 0 0 10px rgb(0 0 0 / 0.8);
   }
-  .date::before { content: ""; width: 2.2em; height: 1px; background: var(--gold); }
+  .date::before { content: ""; width: 1.8em; height: 1px; background: var(--crimson); }
   .date .badge {
     font-size: 0.82em;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.2em;
     color: var(--gold);
-    border: 1px solid var(--gold);
-    padding: 0 0.6em;
+    padding-bottom: 1px;
+    border-bottom: 1px solid rgb(212 162 76 / 0.6);
   }
   .title {
-    margin-top: 0.08em;
+    --tw: 1;
+    margin-top: 0.2em;
+    margin-right: -0.26em;
     font-family: "Cormorant Garamond", "EB Garamond", Georgia, serif;
-    font-weight: 600;
-    font-size: clamp(54px, 8.5vw, 170px);
+    font-weight: 500;
+    font-size: calc(clamp(40px, 5.2vw, 104px) * var(--tw));
     line-height: 1;
-    letter-spacing: 0.08em;
-    color: var(--ink);
-    /* A soft glow of parchment behind the letters keeps them readable over the art. */
-    text-shadow: 0 0 0.12em var(--vellum), 0 0 0.3em var(--vellum), 0 0 0.6em rgb(247 239 220 / 0.8);
+    letter-spacing: 0.26em;
+    white-space: nowrap;
+    color: #d9b46a;
+    filter: drop-shadow(0 0 18px rgb(212 162 76 / 0.2)) drop-shadow(0 2px 2px rgb(0 0 0 / 0.6));
+  }
+  /* Gold leaf, per letter (on the parent it garbles the letter-by-letter reveal). */
+  .title .ch {
+    display: inline-block;
+    background: linear-gradient(180deg, #f1d79a 0%, #d4a24c 58%, #9c7433 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  @supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+    .title .ch { -webkit-text-fill-color: currentColor; background: none; }
   }
   .title::after {
     content: "";
     display: block;
-    width: 38%;
-    height: 2px;
-    margin-top: 0.08em;
-    background: linear-gradient(90deg, var(--gold), rgb(168 128 47 / 0));
+    width: min(34%, 300px);
+    height: 1px;
+    margin-top: 0.24em;
+    background: linear-gradient(90deg, var(--crimson) 0 28px, var(--gold) 28px, transparent);
   }
 
+  /* ---------- Top right: a quiet row of text controls ---------- */
   .controls {
     position: fixed;
-    top: clamp(16px, 3vh, 40px);
-    right: clamp(18px, 3.5vw, 64px);
+    top: calc(var(--gy) - 10px);
+    right: calc(var(--gx) - 14px);
     display: flex;
-    gap: 10px;
+    gap: 2px;
     z-index: 6;               /* stays clickable above the Context drawer */
   }
   .controls button {
     font-family: "EB Garamond", Garamond, Georgia, serif;
-    font-size: clamp(18px, 1.35vw, 24px);
-    font-variant: small-caps;
-    letter-spacing: 0.1em;
-    min-width: 56px;
-    min-height: 52px;
-    padding: 6px 18px;
-    color: var(--ink);
-    background: rgb(247 239 220 / 0.92);
-    border: 1px solid var(--ink-soft);
-    outline: 1px solid rgb(168 128 47 / 0.55);
-    outline-offset: -5px;
-    border-radius: 2px;
-    box-shadow: 0 2px 10px rgb(43 29 17 / 0.18);
+    font-size: clamp(15px, 1.05vw, 19px);
+    font-variant-caps: all-small-caps;
+    letter-spacing: 0.16em;
+    min-width: 44px;
+    min-height: 48px;
+    padding: 6px 14px;
+    color: var(--bone-dim);
+    background-color: transparent;
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0 1px;
+    background-position: 50% calc(100% - 10px);
+    background-repeat: no-repeat;
+    border: 0;
+    border-radius: 0;
+    outline: 0;
+    box-shadow: none;
+    text-shadow: 0 0 12px #000, 0 0 3px #000;
     cursor: pointer;
-    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    transition: background-size 0.3s ease, color 0.2s ease;
   }
-  .controls button:hover, .controls button:focus-visible {
-    background: #f3e2b8;
-    box-shadow: 0 3px 16px rgb(168 128 47 / 0.35);
-    outline-color: var(--gold);
+  .controls button:hover { color: var(--gold-hi); background-size: 1.4em 1px; }
+  .controls button:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; color: var(--gold-hi); }
+  .controls button:active { color: var(--gold); }
+  .controls button:disabled { color: var(--disabled); cursor: default; background-size: 0 1px; }
+  .controls button[aria-pressed="true"], .controls button[aria-expanded="true"] {
+    color: var(--gold);
+    background-image: linear-gradient(var(--crimson), var(--crimson));
+    background-size: 1.4em 1px;
   }
-  .controls button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-  .controls button:active { background: #ead39c; }
-  .controls button:disabled { color: rgb(90 70 48 / 0.45); cursor: default; background: rgb(247 239 220 / 0.92); box-shadow: 0 2px 10px rgb(43 29 17 / 0.1); }
-  .controls button[aria-pressed="true"], .controls button[aria-expanded="true"] { background: var(--ink); color: var(--vellum); outline-color: var(--gold-light); }
-  .controls .arrow { font-size: 1.35em; line-height: 0; }
-  .controls .nav-label { font-size: 0.82em; margin: 0 0.45em; }
+  .controls .arrow { font-weight: 500; font-size: 1.4em; line-height: 0; color: var(--bone); }
+  .controls button:disabled .arrow { color: inherit; }
+  .controls .nav-label { font-size: 0.92em; margin: 0 0.45em; }
 
   /* Share menu */
   .share { position: relative; }
   .menu {
     position: absolute;
-    top: calc(100% + 10px);
+    top: calc(100% + 8px);
     right: 0;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 10px;
-    background: var(--vellum);
-    border: 1px solid var(--ink-soft);
-    box-shadow: 0 8px 28px rgb(43 29 17 / 0.25);
+    padding: 8px;
+    background: rgb(20 18 21 / 0.96);
+    border: 1px solid rgb(212 162 76 / 0.28);
+    box-shadow: 0 18px 48px rgb(0 0 0 / 0.6);
     z-index: 6;
+    animation: menu-in 0.16s ease;
   }
+  @keyframes menu-in { from { opacity: 0; } }
   .menu[hidden] { display: none; }
-  .menu button { white-space: nowrap; min-height: 48px; text-align: left; box-shadow: none; }
+  .menu button {
+    white-space: nowrap;
+    min-height: 48px;
+    padding: 0 18px;
+    text-align: left;
+    background-image: none;
+    text-shadow: none;
+  }
+  .menu button:hover, .menu button:focus-visible { color: var(--gold-hi); box-shadow: inset 2px 0 0 var(--crimson); outline: 0; }
 
   .toast {
     position: fixed;
     left: 50%;
     bottom: clamp(24px, 6vh, 64px);
     transform: translate(-50%, 16px);
-    font-size: clamp(16px, 1.15vw, 20px);
-    font-style: italic;
-    background: var(--ink);
-    color: var(--vellum);
-    border: 1px solid var(--gold);
-    padding: 10px 20px;
+    font-size: clamp(15px, 1.05vw, 19px);
+    font-variant-caps: all-small-caps;
+    letter-spacing: 0.08em;
+    background: var(--charcoal);
+    color: var(--bone);
+    border: 1px solid rgb(212 162 76 / 0.4);
+    border-top-color: var(--gold);
+    padding: 10px 22px;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease, transform 0.3s ease;
@@ -145,66 +196,83 @@
 
   /* Outgoing copies of the title and caption during a transition. */
   .ghost { pointer-events: none !important; z-index: 2; }
-  .title .ch { display: inline-block; }
   @media (max-width: 1100px) { .controls .nav-label { display: none; } }
 
-  /* ---------- Bottom left: the verse, framed like a manuscript page ---------- */
+  /* ---------- The verse: set directly on the dark sea, the hero of the page ---------- */
   .caption {
     --ts: 1;
     position: fixed;
-    left: clamp(18px, 3.5vw, 64px);
-    bottom: clamp(20px, 4.5vh, 56px);
-    width: min(38vw, 660px);
-    background: rgb(247 239 220 / 0.95);
-    border: 1px solid var(--ink-soft);
-    outline: 1px solid var(--gold);
-    outline-offset: -8px;
-    box-shadow: 0 10px 40px rgb(43 29 17 / 0.28);
-    padding: clamp(22px, 2.3vw, 38px) clamp(24px, 2.5vw, 42px) clamp(18px, 1.8vw, 30px);
+    left: var(--gx);
+    bottom: clamp(36px, 10vh, 120px);
+    width: min(38vw, 44rem);
+    isolation: isolate;
+    z-index: 2;
+  }
+  /* An invisible pool of shadow behind the words, so they stay readable over any light. */
+  .caption::before {
+    content: "";
+    position: absolute;
+    inset: -22% -24% -26% -18%;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(closest-side, rgb(7 6 7 / 0.78), rgb(7 6 7 / 0.5) 55%, transparent);
+  }
+  @media (min-aspect-ratio: 1/1) and (max-aspect-ratio: 13/10) {
+    .caption::before { background: radial-gradient(closest-side, rgb(7 6 7 / 0.85), rgb(7 6 7 / 0.55) 55%, transparent); }
   }
   .caption .text {
-    font-size: calc(clamp(19px, 1.55vw, 30px) * var(--ts));
-    line-height: 1.42;
-    color: var(--ink);
+    display: flow-root;
+    font-size: calc(clamp(21px, 0.9rem + 1.45vw, 44px) * var(--ts));
+    line-height: 1.44;
+    letter-spacing: 0.003em;
+    color: var(--bone);
+    font-feature-settings: "kern", "liga", "onum";
+    text-wrap: pretty;
+    hanging-punctuation: first;
+    text-shadow: 0 1px 2px rgb(0 0 0 / 0.7), 0 0 28px rgb(0 0 0 / 0.55);
   }
-  /* An illuminated initial, as in an old Bible. */
+  /* A gold initial, as if lit by the light behind Jesus. */
   .caption .text::first-letter {
     float: left;
     font-family: "Cormorant Garamond", "EB Garamond", Georgia, serif;
-    font-weight: 700;
-    font-size: 3.3em;
-    line-height: 0.82;
-    margin: 0.06em 0.12em 0 0;
+    font-weight: 500;
+    font-size: 3em;
+    line-height: 0.8;
+    margin: 0.06em 0.12em 0 -0.02em;
     color: var(--gold);
-    text-shadow: 0 1px 0 rgb(43 29 17 / 0.25);
+    text-shadow: 0 0 22px rgb(212 162 76 / 0.35);
   }
   .caption .ref {
-    margin-top: 0.8em;
-    font-size: calc(clamp(17px, 1.3vw, 24px) * var(--ts));
-    font-variant: small-caps;
-    letter-spacing: 0.16em;
+    display: flex;
+    align-items: center;
+    gap: 0.9em;
+    clear: both;
+    margin-top: 1.1em;
+    font-size: calc(clamp(14px, 1vw, 18px) * var(--ts));
+    font-variant-caps: all-small-caps;
+    font-feature-settings: "onum";
+    letter-spacing: 0.26em;
     color: var(--gold);
-    text-align: right;
+    text-shadow: 0 0 10px rgb(0 0 0 / 0.8);
   }
-  .caption .ref::before { content: "— "; color: var(--ink-soft); }
+  .caption .ref::before { content: ""; flex: none; width: 2.2em; height: 1px; background: var(--crimson); }
 
   .hint, .credit {
     position: fixed;
-    right: clamp(18px, 3.5vw, 64px);
-    font-style: italic;
-    color: var(--ink);
-    background: rgb(247 239 220 / 0.9);
-    padding: 2px 10px;
-    box-shadow: 0 0 12px 4px rgb(247 239 220 / 0.85);
+    right: var(--gx);
+    font-variant-caps: all-small-caps;
+    color: var(--muted);
+    text-shadow: 0 0 8px rgb(0 0 0 / 0.9);
     pointer-events: none;
   }
   .hint {
-    top: calc(clamp(16px, 3vh, 40px) + 66px);
-    font-size: clamp(14px, 1vw, 17px);
+    bottom: calc(clamp(10px, 1.6vh, 20px) + 24px);
+    font-size: 13px;
+    letter-spacing: 0.1em;
     transition: opacity 1.2s ease;
   }
   .hint.gone, .drawer.open ~ .hint { opacity: 0; }
-  .credit { bottom: clamp(10px, 1.6vh, 20px); font-size: clamp(11px, 0.75vw, 13px); }
+  .credit { bottom: clamp(10px, 1.6vh, 20px); font-size: 12px; letter-spacing: 0.06em; }
 
   /* ---------- Context drawer ---------- */
   .drawer {
@@ -214,86 +282,103 @@
     bottom: 0;
     width: min(520px, 92vw);
     overflow-y: auto;
-    background: var(--vellum);
-    border-left: 1px solid var(--ink-soft);
-    box-shadow: -14px 0 40px rgb(43 29 17 / 0.22);
+    background: rgb(14 12 13 / 0.96);
+    border-left: 1px solid rgb(212 162 76 / 0.22);
+    box-shadow: -24px 0 60px rgb(0 0 0 / 0.55);
+    scrollbar-color: rgb(212 162 76 / 0.35) transparent;
     /* The top is left free so the day and Share buttons stay usable while it's open. */
-    padding: calc(clamp(16px, 3vh, 40px) + 88px) 36px 44px;
-    font-size: 19px;
-    line-height: 1.6;
+    padding: calc(var(--gy) + 74px) 36px 44px;
+    font-size: 18px;
+    line-height: 1.65;
+    color: var(--bone-soft);
     transform: translateX(105%);
-    transition: transform 0.4s ease;
+    transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
     z-index: 5;
   }
   .drawer.open { transform: none; }
-  .drawer .label { font-variant: small-caps; letter-spacing: 0.2em; color: var(--gold); font-size: 18px; }
+  .drawer .label { font-variant-caps: all-small-caps; letter-spacing: 0.22em; color: var(--gold); font-size: 17px; }
   .drawer h2 {
     font-family: "Cormorant Garamond", "EB Garamond", Georgia, serif;
-    font-weight: 600;
-    font-size: 42px;
+    font-weight: 500;
+    font-size: 40px;
     line-height: 1.05;
     margin: 2px 0 10px;
+    color: var(--gold-hi);
   }
   .drawer h3 {
-    font-weight: 500;
-    font-size: 17px;
-    font-variant: small-caps;
-    letter-spacing: 0.18em;
+    font-weight: 400;
+    font-size: 15px;
+    font-variant-caps: all-small-caps;
+    letter-spacing: 0.22em;
     color: var(--gold);
     margin: 26px 0 6px;
     display: flex;
     align-items: center;
-    gap: 0.7em;
+    gap: 0.8em;
   }
-  .drawer h3::after { content: ""; flex: 1; height: 1px; background: rgb(168 128 47 / 0.45); }
-  .drawer .num { font-size: 0.68em; color: var(--gold); vertical-align: super; margin-right: 0.2em; }
-  .drawer .here { background: rgb(214 180 94 / 0.28); box-shadow: 0 0 0 2px rgb(214 180 94 / 0.28); }
+  .drawer h3::after { content: ""; flex: 1; height: 1px; background: rgb(212 162 76 / 0.3); }
+  .drawer .num { font-size: 0.68em; color: var(--crimson-text); vertical-align: super; margin-right: 0.2em; }
+  .drawer .here { color: #f4ead3; background: var(--crimson-wash); box-shadow: 0 0 0 2px rgb(138 42 34 / 0.26); }
   .drawer .close {
     position: absolute;
-    top: calc(clamp(16px, 3vh, 40px) + 82px);
+    top: calc(var(--gy) + 70px);
     right: 24px;
     width: 46px;
     height: 46px;
     font-family: "EB Garamond", Georgia, serif;
-    font-size: 30px;
+    font-size: 28px;
     line-height: 1;
-    color: var(--ink);
-    background: none;
-    border: 1px solid var(--ink-soft);
-    border-radius: 2px;
+    color: var(--bone-dim);
+    background: transparent;
+    border: 1px solid rgb(212 162 76 / 0.35);
+    border-radius: 0;
     cursor: pointer;
   }
-  .drawer .close:hover { background: #f3e2b8; }
+  .drawer .close:hover, .drawer .close:focus-visible { color: var(--gold-hi); border-color: var(--gold); background: rgb(212 162 76 / 0.08); outline: 0; }
 
   /* Phones and narrow windows: controls in a row across the top, then the title,
-     with the caption across the bottom. */
+     with the verse across the bottom. This block must stay after the desktop rules. */
   @media (max-aspect-ratio: 1/1), (max-width: 700px) {
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 170px;
+      background: linear-gradient(rgb(7 6 7 / 0.6), transparent);
+      pointer-events: none;
+      z-index: 1;
+    }
     .controls {
-      left: 12px;
-      right: 12px;
-      top: 12px;
+      left: 8px;
+      right: 8px;
+      top: 10px;
       display: grid;
       grid-template-columns: 0.8fr 1.3fr 0.8fr 1.5fr 1.3fr;
-      gap: 6px;
+      gap: 2px;
     }
-    .controls button { min-width: 0; padding: 4px 4px; font-size: clamp(15px, 4.2vw, 22px); letter-spacing: 0.04em; }
+    .controls button { min-width: 0; min-height: 48px; padding: 4px 2px; font-size: clamp(14px, 3.9vw, 18px); letter-spacing: 0.08em; }
     .controls .nav-label { display: none; }
     .share > button { width: 100%; }
-    .heading { top: 84px; left: 16px; }
-    .title { font-size: clamp(44px, 13vw, 110px); }
-    .caption { width: auto; right: 14px; left: 14px; }
+    .heading { top: 76px; left: 20px; right: 20px; }
+    .title { font-size: calc(clamp(34px, 10.5vw, 72px) * var(--tw)); letter-spacing: 0.2em; margin-right: -0.2em; }
+    .caption { width: auto; left: 20px; right: 20px; bottom: calc(40px + env(safe-area-inset-bottom)); }
+    .caption::before { inset: -18% -10% -14% -10%; }
+    .caption .text { font-size: calc(clamp(19px, 5.2vw, 24px) * var(--ts)); line-height: 1.45; }
     .hint { display: none; }
+    .credit { right: 0; left: 0; bottom: 6px; text-align: center; font-size: 11px; }
   }
 
   /* People who prefer less motion get instant UI changes (verse changes become short fades). */
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { transition-duration: 0.01ms !important; }
+    *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
   }
 </style>
 </head>
 <body>
 <img class="fallback-img" id="fallbackImg" alt="">
-<canvas id="scene" aria-label="An engraved sea around a woodcut of Jesus catching Peter. Click the water to make ripples."></canvas>
+<canvas id="scene" aria-label="A night sea at the fourth watch: a woodcut of Jesus catching Peter, lit by a single soft light. Click the water to make ripples."></canvas>
 
 <header class="heading">
   <div class="date" id="date"></div>
@@ -347,7 +432,7 @@ const FIGURE = [
 const ART_HORIZON = 0.25;          // where the sea meets the sky inside the woodcut
 const JESUS_HEAD = [0.40, 0.09];   // centre of the light rays, in artwork coordinates
 const MAX_RIPPLES = 12;
-const TRAVEL_MS = 1150;            // how long the scene glides when moving between verses
+const TRAVEL_MS = 1400;            // how long the scene glides when moving between verses
 // Testing switches: ?nograin  ?t=SECONDS (freeze time)  ?ripple=X,Y (screen fractions)  ?panel  ?lowres
 const PARAMS = new URLSearchParams(location.search);
 
@@ -374,9 +459,12 @@ uniform vec4 uRipples[${MAX_RIPPLES}];   // x, y (screen fractions), start time,
 // and uMood (0..1, one value per verse) sets how stormy the sky is.
 uniform float uTravel, uPulse, uProgress, uDir, uMood;
 
-const vec3 VELLUM = vec3(0.969, 0.937, 0.863);
-const vec3 INK = vec3(0.169, 0.114, 0.067);
 const vec3 GOLD = vec3(0.84, 0.66, 0.30);
+const vec3 NIGHT = vec3(0.027, 0.024, 0.027);     // engraved line ink
+const vec3 BONE = vec3(0.937, 0.902, 0.824);      // the woodcut's lit paper
+const vec3 EMBER = vec3(0.42, 0.11, 0.09);        // crimson-umber dusk band
+const vec3 AMBER = vec3(0.86, 0.56, 0.24);        // horizon, light on the water, lens streak
+const vec3 HALO = vec3(1.0, 0.82, 0.52);          // the light behind Jesus
 const int ROWS = 16;
 
 float hash1(float n) { return fract(sin(n * 127.1) * 43758.5453); }
@@ -431,6 +519,9 @@ void main() {
 
   vec2 sun = vec2(uSun.x * aspect, uSun.y);
   float sunDist = length(p - sun);
+  // Tighter glows on tall phone screens, so the small sky stays dark gold, never cream.
+  float pk = mix(1.7, 1.0, smoothstep(0.8, 1.3, aspect));
+  float breath = 1.0 + 0.04 * sin(t * 0.5);          // the halo breathes; still when time is frozen
 
   if (uv.y < uHorizon) {
     // ---------- Sky: horizontal engraved lines, heavier at the top ----------
@@ -449,9 +540,9 @@ void main() {
     // Light from behind Jesus: rays and a glow that clear away the lines.
     vec2 dv = p - sun;
     float ang = atan(dv.y, dv.x);
-    float ray = smoothstep(0.35, 0.7, 0.5 + 0.5 * sin(ang * 26.0 + uTravel * 0.4 + t * 0.04));
+    float ray = smoothstep(0.35, 0.7, 0.5 + 0.5 * sin(ang * 18.0 + uTravel * 0.4 + t * 0.02));
     float reach = 1.0 - smoothstep(0.05, 1.0, sunDist);
-    dark *= 1.0 - ray * reach * 0.8;
+    dark *= 1.0 - ray * reach * 0.5;
     float glow = 1.0 - smoothstep(0.0, 0.35, sunDist);
     dark *= 1.0 - glow;
     light = max(light, glow * 0.85 + ray * reach * 0.3);
@@ -514,11 +605,20 @@ void main() {
     }
   }
 
-  vec3 col = mix(VELLUM, INK, clamp(ink, 0.0, 1.0) * 0.92);
-  // Parchment: soft stains and uneven tone.
-  float stain = fbm(vUv * vec2(aspect, 1.0) * 2.6 + 11.0);
-  col = mix(col, col * vec3(0.92, 0.86, 0.76), smoothstep(0.45, 0.8, stain) * 0.4);
-  col = mix(col, col * 0.55 + (VELLUM + GOLD * 0.25) * 0.5, clamp(light, 0.0, 1.0) * 0.55);
+  // ---------- The night: the engraving prints onto a field of light that exists only near the halo ----------
+  float hz = uHorizon, dh = uv.y - hz, sx = abs(p.x - sun.x);
+  vec3 L = mix(vec3(0.020, 0.022, 0.028), vec3(0.060, 0.052, 0.054), smoothstep(0.0, hz, uv.y));
+  float band = exp(-abs(dh) / (dh < 0.0 ? 0.09 : 0.05)) * mix(1.0, 0.55, uMood);
+  L += EMBER * band * 0.38 * (0.55 + 0.45 * exp(-sx * 0.9));                           // crimson dusk band
+  L += AMBER * exp(-abs(dh) / 0.022) * exp(-sx * 1.4) * 0.75 * mix(1.0, 0.6, uMood);   // the hot horizon line
+  L += (HALO * exp(-sunDist * 5.5 * pk) * 0.95 + AMBER * exp(-sunDist * 2.6 * pk) * 0.10) * breath;
+  if (dh > 0.0) {                                                                      // a path of light on the water
+    float q = (p.x - sun.x) * 2.6;
+    L += AMBER * exp(-q * q) * exp(-dh * 1.6) * 0.70;
+  }
+  L *= mix(0.85, 1.12, fbm(vUv * vec2(aspect, 1.0) * 2.2 + vec2(t * 0.01, 0.0) + 11.0)); // slow haze: never flat black
+  vec3 col = mix(L, NIGHT, clamp(ink, 0.0, 1.0) * 0.93);
+  col += HALO * clamp(light, 0.0, 1.0) * 0.10;
 
   // ---------- The woodcut figures, cut out with the outline ----------
   vec2 iuv = (vUv - uFig.xy) / uFig.zw;
@@ -528,34 +628,35 @@ void main() {
     m *= 1.0 - smoothstep(0.86, 0.995, iuv.x);
     m *= smoothstep(0.0, 0.08, iuv.y);
     float lum = dot(texture(uImage, iuv).rgb, vec3(0.299, 0.587, 0.114));
-    vec3 art = mix(INK, VELLUM, smoothstep(0.1, 0.85, lum));
-    // Near the cut edge, print the woodcut's lines over the scene (multiply) instead of
-    // pasting its white paper on top, so there's no pale halo around the figures.
-    vec3 overprint = col * art / VELLUM;
-    vec3 blended = mix(overprint, art, smoothstep(0.72, 1.0, m));
+    float s = smoothstep(0.1, 0.85, lum);                                    // paper = 1, ink = 0
+    // Lit from the halo down: Jesus and Peter in light, the boat in mid-tone, the feet in night.
+    float lit = (0.07 + mix(0.60, 0.86, smoothstep(0.8, 1.3, aspect)) * exp(-sunDist * 2.7 * pk)) * breath;
+    vec3 paper = BONE * lit * vec3(1.0, 0.94, 0.84) + AMBER * 0.10 * lit;
+    vec3 art = mix(NIGHT, paper, s);
+    // Near the cut edge the woodcut only darkens (its lines print, its paper never brightens),
+    // so there's no pale halo or box around the figures.
+    vec3 overprint = min(col, col * mix(0.10, 1.0, s));
+    vec3 blended = mix(overprint, art, smoothstep(0.60, 1.0, m));
     col = mix(col, blended, smoothstep(0.0, 0.3, m));
-    // A faint golden light on Jesus from the glow behind him.
-    col = mix(col, col * (vec3(1.0) + GOLD * 0.35), (1.0 - smoothstep(0.0, 0.3, sunDist)) * m * 0.5);
   }
 
-  // ---------- Moving between verses: a warm sweep of light and drifting gold motes ----------
+  // ---------- Lens: a soft bloom and one thin anamorphic streak through the halo ----------
+  col += HALO * exp(-sunDist * 9.0) * 0.22 * breath;
+  float sy = (p.y - sun.y) / 0.006;
+  col += AMBER * exp(-sy * sy) * exp(-abs(p.x - sun.x) * 2.2) * 0.10;
+
+  // ---------- Moving between verses: the exposure breathes down as amber light crosses the lens ----------
   if (uPulse > 0.001) {
     float sweepX = uDir > 0.0 ? mix(-0.25, 1.25, uProgress) : mix(1.25, -0.25, uProgress);
-    float s = (vUv.x - sweepX) / 0.18;
-    col = mix(col, VELLUM + GOLD * 0.12, uPulse * 0.16 + exp(-s * s) * uPulse * 0.34);
-    vec2 g = vec2(vUv.x * aspect, vUv.y) * 16.0 - vec2(uTravel * 5.0, uProgress * 0.6);
-    vec2 cell = floor(g);
-    if (hash(cell) > 0.88) {
-      vec2 at = vec2(hash(cell + 3.1), hash(cell + 7.7)) * 0.8 + 0.1;
-      float d = length(fract(g) - at);
-      col = mix(col, GOLD + 0.12, (1.0 - smoothstep(0.012, 0.05, d)) * uPulse * 0.85);
-    }
+    float sw = (vUv.x - sweepX) / 0.22;
+    col *= 1.0 - uPulse * 0.18;
+    col += AMBER * exp(-sw * sw) * uPulse * 0.10;
   }
 
-  // Paper grain and aged, darker edges.
-  col += (hash(floor(gl_FragCoord.xy / uDpr)) - 0.5) * 0.035 * uGrain;
-  float v = length((vUv - 0.5) * vec2(1.0, 1.1));
-  col = mix(col, col * vec3(0.78, 0.68, 0.55), smoothstep(0.5, 0.95, v) * 0.55);
+  // Static film grain (stronger in the shadows) and a deep vignette biased toward the light.
+  col += (hash(floor(gl_FragCoord.xy / uDpr)) - 0.5) * 0.028 * uGrain * (0.5 + 0.5 * (1.0 - dot(col, vec3(0.333))));
+  float v = length((vUv - vec2(mix(0.5, uSun.x, 0.4), 0.45)) * vec2(1.0, 1.15));
+  col *= 1.0 - smoothstep(0.38, 0.98, v) * 0.70;
   outColor = vec4(col, 1.0);
 }`;
 
@@ -630,6 +731,7 @@ function fillText() {
   $("translation").textContent = DATA.translation;
   $("today").disabled = offset === todayOffset();
   fitCaption();
+  fitTitle();
   for (const [id, delta, word] of [["prev", -1, "Previous"], ["next", 1, "Next"]]) {
     const label = `${word}: ${dateText(offset + delta)} · ${verseFor(offset + delta).ref}`;
     $(id).title = `${label} (${delta < 0 ? "←" : "→"})`;
@@ -647,14 +749,29 @@ function displayText(verse) {
   return verse.text.replace(/^([“"‘']?)(\p{Ll})/u, (_, quote, letter) => quote + letter.toUpperCase());
 }
 
-// Long passages: shrink the text until the caption fits in about 40% of the height.
+const isPortrait = () => window.innerWidth < window.innerHeight || window.innerWidth <= 700;
+
+// Long passages: shrink the text until the caption fits (40% of the height, 30% on phones).
 function fitCaption() {
   const caption = $("caption");
+  const limit = window.innerHeight * (isPortrait() ? 0.3 : 0.4);
   let scale = 1;
   caption.style.setProperty("--ts", scale);
-  while (caption.offsetHeight > window.innerHeight * 0.4 && scale > 0.6) {
+  while (caption.offsetHeight > limit && scale > 0.6) {
     scale -= 0.05;
     caption.style.setProperty("--ts", scale);
+  }
+}
+
+// Long title words (up to "NOTHING TOO HARD"): shrink until the word fits its column.
+function fitTitle() {
+  const title = $("title");
+  const maxW = isPortrait() ? window.innerWidth - 40 : window.innerWidth * 0.46;
+  let tw = 1;
+  title.style.setProperty("--tw", tw);
+  while (title.scrollWidth > maxW && tw > 0.45) {
+    tw -= 0.05;
+    title.style.setProperty("--tw", tw);
   }
 }
 
@@ -746,14 +863,14 @@ function figureRect(width, height, imgAspect) {
   if (width < height) {
     // Portrait (phones): bigger, cropped at the sides, centred on Jesus and Peter,
     // and standing above the verse caption instead of hidden behind it.
-    const figH = Math.min(0.58 * height, (1.4 * width) / imgAspect);
+    const figH = Math.min(0.56 * height, (1.4 * width) / imgAspect);
     const figW = figH * imgAspect;
-    const bottom = 0.74 * height;
+    const bottom = 0.70 * height;
     return [(0.5 * width - 0.46 * figW) / width, (bottom - figH) / height, figW / width, figH / height];
   }
-  const figH = Math.min(0.9 * height, (0.98 * width) / imgAspect);
+  const figH = Math.min(0.84 * height, (0.98 * width) / imgAspect);
   const figW = figH * imgAspect;
-  const centre = width / height > 1.15 ? 0.58 * width : 0.5 * width;
+  const centre = width / height > 1.15 ? 0.63 * width : 0.5 * width;
   const x0 = Math.min(Math.max(centre - figW / 2, 0), width - figW);
   return [x0 / width, (height - figH) / height, figW / width, figH / height];
 }
@@ -868,7 +985,7 @@ async function start() {
     gl.uniform1f(u("uDir"), s.dir);
     // The figures lean very slightly against the direction of travel, then settle.
     const [x, y, w, h] = figBase;
-    const grow = 1 + 0.014 * pulse;
+    const grow = 1 + (s.dir > 0 ? 0.018 : -0.012) * pulse;
     gl.uniform4f(u("uFig"), x - s.dir * 0.01 * pulse - (w * (grow - 1)) / 2, y - h * (grow - 1), w * grow, h * grow);
   }
 
@@ -908,6 +1025,7 @@ async function start() {
     gl.uniform1f(u("uHorizon"), horizon);
     gl.uniform2f(u("uSun"), fig[0] + JESUS_HEAD[0] * fig[2], fig[1] + JESUS_HEAD[1] * fig[3]);
     fitCaption();
+    fitTitle();
     // Resizing clears the canvas, so a frozen scene must be redrawn here.
     if (still || paused) draw();
   }
@@ -1010,30 +1128,30 @@ function go(newOffset) {
     play(ghosts[0], [
       { opacity: 1, transform: "none", filter: "blur(0)" },
       { opacity: 0, transform: `translate3d(${-dir * 2}vw, -0.5vh, 0) scale(${dir > 0 ? 1.12 : 0.88})`, filter: "blur(7px)" },
-    ], { duration: 520, easing: "cubic-bezier(0.4, 0, 0.6, 1)", fill: "forwards" });
+    ], { duration: 600, easing: "cubic-bezier(0.4, 0, 0.6, 1)", fill: "forwards" });
     const letters = [...$("title").children];
+    const stagger = Math.min(44, 520 / Math.max(letters.length, 1));
     letters.forEach((letter, i) => {
       const order = dir > 0 ? i : letters.length - 1 - i;     // letters arrive in the direction of travel
       play(letter, [
         { opacity: 0, transform: `translateY(0.16em) scale(${dir > 0 ? 0.8 : 1.2})`, filter: "blur(9px)" },
         { opacity: 1, transform: "none", filter: "blur(0)" },
-      ], { duration: 640, delay: 200 + order * 42, easing: ease });
+      ], { duration: 760, delay: 260 + order * stagger, easing: ease });
     });
-    play($("date"), [{ opacity: 0 }, { opacity: 1 }], { duration: 400, delay: 160 });
-    // The caption moves only a little, and the old verse is gone before the new one
-    // appears, so two passages never overlap.
+    play($("date"), [{ opacity: 0 }, { opacity: 1 }], { duration: 500, delay: 200 });
+    // A rack focus: the old verse is gone before the new one resolves, so two passages never overlap.
     play(ghosts[1], [
-      { opacity: 1, transform: "none" },
-      { opacity: 0, transform: `translateX(${-dir * 20}px)` },
-    ], { duration: 200, easing: "ease-in", fill: "forwards" });
+      { opacity: 1, transform: "none", filter: "blur(0)" },
+      { opacity: 0, transform: "translateY(-6px)", filter: "blur(3px)" },
+    ], { duration: 240, easing: "ease-in", fill: "forwards" });
     play(caption, [
-      { opacity: 0, transform: `translateX(${dir * 20}px)` },
-      { opacity: 1, transform: "none" },
-    ], { duration: 480, delay: 180, easing: ease });
+      { opacity: 0, transform: "translateY(10px)", filter: "blur(4px)" },
+      { opacity: 1, transform: "none", filter: "blur(0)" },
+    ], { duration: 680, delay: 300, easing: "cubic-bezier(0.16, 1, 0.3, 1)" });
     play($("verseRef"), [
       { clipPath: "inset(0 100% 0 0)" },
       { clipPath: "inset(0 0 0 0)" },
-    ], { duration: 520, delay: 300, easing: ease });
+    ], { duration: 640, delay: 480, easing: ease });
     if ($("drawer").classList.contains("open")) {
       play($("drawerBody"), [{ opacity: 0 }, { opacity: 1 }], { duration: 240 });
     }
@@ -1041,7 +1159,7 @@ function go(newOffset) {
   for (const g of ghosts) g.getAnimations().forEach((a) => a.finished.then(() => g.remove(), () => {}));
   // Safety net: if the browser stalls (a busy or backgrounded tab), still end on the
   // finished state, so the new title never stays invisible.
-  const timer = setTimeout(settleTransition, 1600);
+  const timer = setTimeout(settleTransition, 1900);
   transition = { animations: anims, ghosts, timer };
 }
 
@@ -1100,101 +1218,186 @@ function wrapLines(ctx, text, maxWidth) {
   return lines;
 }
 
-// A 1080×1350 share card in the same scripture style as the page, for the verse on screen.
+// Draws text with letter-spacing, character by character where ctx.letterSpacing is missing.
+function trackedText(ctx, text, x, y, spacingPx, align = "left") {
+  if ("letterSpacing" in ctx) {
+    ctx.save();
+    ctx.letterSpacing = `${spacingPx}px`;
+    ctx.textAlign = align;
+    ctx.fillText(text, align === "right" ? x + spacingPx : x, y);   // trailing space would shift right-aligned text
+    ctx.restore();
+    return;
+  }
+  const chars = [...text];
+  const width = chars.reduce((w, ch) => w + ctx.measureText(ch).width + spacingPx, -spacingPx);
+  let cx = align === "right" ? x - width : x;
+  ctx.save();
+  ctx.textAlign = "left";
+  for (const ch of chars) { ctx.fillText(ch, cx, y); cx += ctx.measureText(ch).width + spacingPx; }
+  ctx.restore();
+}
+
+function trackedWidth(ctx, text, spacingPx) {
+  return [...text].reduce((w, ch) => w + ctx.measureText(ch).width + spacingPx, -spacingPx);
+}
+
+// A 1080×1350 share card: a dark gallery print of the verse on screen, drawn in 2D
+// (never read from the WebGL canvas, so transitions and ripples can't leak into it).
 async function shareCard(verse = currentVerse(), offsetDays = offset) {
-  const W = 1080, H = 1350;
-  const INK = "#2b1d11", GOLD = "#a8802f", VELLUM = "#f7efdc";
+  const W = 1080, H = 1350, M = 88;
+  const NIGHT = "#0b0a0b", BONE = "#efe6d2", GOLD = "#d4a24c", CRIMSON = "#8a2a22";
   const c = document.createElement("canvas");
   c.width = W; c.height = H;
   const ctx = c.getContext("2d");
-  ctx.fillStyle = "#efe4cc";
+  ctx.fillStyle = NIGHT;
   ctx.fillRect(0, 0, W, H);
 
-  // The woodcut, toned like ink on parchment, fading into the page.
+  // 1. The woodcut, lamplit from Jesus' head and falling into night.
   const img = artImage ?? (artImage = await loadImage(DATA.image));
-  ctx.save();
-  ctx.filter = "grayscale(1) sepia(0.55) contrast(1.1)";
-  ctx.globalCompositeOperation = "multiply";
-  const sw = img.width * 0.86, sh = sw * (820 / W);
-  ctx.drawImage(img, img.width * 0.08, 0, sw, sh, 0, 0, W, 820);
-  ctx.restore();
-  const fade = ctx.createLinearGradient(0, 600, 0, 840);
-  fade.addColorStop(0, "rgba(239,228,204,0)");
-  fade.addColorStop(1, "rgba(239,228,204,1)");
+  const PIC_H = 860;
+  const sx = img.width * 0.08, sw = img.width * 0.86, sh = sw * (PIC_H / W);
+  const pic = document.createElement("canvas");
+  pic.width = W; pic.height = PIC_H;
+  const p = pic.getContext("2d");
+  p.filter = "grayscale(1) contrast(1.12)";
+  p.drawImage(img, sx, 0, sw, sh, 0, 0, W, PIC_H);
+  p.filter = "none";
+  const head = { x: ((JESUS_HEAD[0] * img.width - sx) / sw) * W, y: ((JESUS_HEAD[1] * img.height) / sh) * PIC_H };
+  p.globalCompositeOperation = "multiply";
+  const lamp = p.createRadialGradient(head.x, head.y + 60, 0, head.x, head.y + 60, 1000);
+  lamp.addColorStop(0, "#fbf1d8");
+  lamp.addColorStop(0.2, "#e9c98a");
+  lamp.addColorStop(0.5, "#8f6c3c");
+  lamp.addColorStop(0.85, "#34281b");
+  lamp.addColorStop(1, "#141110");
+  p.fillStyle = lamp;
+  p.fillRect(0, 0, W, PIC_H);
+  p.globalCompositeOperation = "screen";
+  const bloom = p.createRadialGradient(head.x, head.y, 0, head.x, head.y, 260);
+  bloom.addColorStop(0, "rgba(255,226,170,0.35)");
+  bloom.addColorStop(1, "rgba(255,226,170,0)");
+  p.fillStyle = bloom;
+  p.fillRect(0, 0, W, PIC_H);
+  const streak = p.createLinearGradient(0, 0, W, 0);
+  streak.addColorStop(0, "rgba(219,143,61,0)");
+  streak.addColorStop(Math.min(Math.max(head.x / W, 0.05), 0.95), "rgba(219,143,61,0.22)");
+  streak.addColorStop(1, "rgba(219,143,61,0)");
+  p.fillStyle = streak;
+  p.fillRect(0, head.y - 3, W, 6);
+  ctx.drawImage(pic, 0, 0);
+
+  // 2. Fade the picture into the night, and a vignette.
+  const fade = ctx.createLinearGradient(0, 520, 0, PIC_H);
+  fade.addColorStop(0, "rgba(11,10,11,0)");
+  fade.addColorStop(1, NIGHT);
   ctx.fillStyle = fade;
-  ctx.fillRect(0, 600, W, 240);
+  ctx.fillRect(0, 520, W, PIC_H - 520 + 1);
+  const vig = ctx.createRadialGradient(W * 0.45, H * 0.4, 0, W * 0.45, H * 0.4, Math.hypot(W, H) * 0.62);
+  vig.addColorStop(0.55, "rgba(0,0,0,0)");
+  vig.addColorStop(1, "rgba(0,0,0,0.6)");
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, H);
 
-  // Title word, with a soft parchment glow behind it.
-  let size = 150;
-  ctx.font = `600 ${size}px "Cormorant Garamond"`;
-  while (ctx.measureText(verse.word).width > W - 160 && size > 64) ctx.font = `600 ${(size -= 6)}px "Cormorant Garamond"`;
-  ctx.save();
-  ctx.shadowColor = VELLUM;
-  ctx.shadowBlur = 40;
-  ctx.fillStyle = INK;
-  for (let i = 0; i < 3; i++) ctx.fillText(verse.word, 70, 190);
-  ctx.restore();
+  // 3. The text, laid out from the bottom up.
+  ctx.textBaseline = "alphabetic";
+  const footerY = H - 72;
+  ctx.font = `500 19px "EB Garamond"`;
+  ctx.fillStyle = "#b9a98c";
+  trackedText(ctx, `${dateText(offsetDays)} · ${DATA.translation}`.toUpperCase(), M, footerY, 4);
+  ctx.fillStyle = "#857a68";
+  trackedText(ctx, "VERSE-AI", W - M, footerY, 4, "right");
+
+  const refY = footerY - 92;
+  ctx.fillStyle = CRIMSON;
+  ctx.fillRect(M, refY - 9, 56, 1.5);
+  ctx.font = `500 26px "EB Garamond"`;
   ctx.fillStyle = GOLD;
-  ctx.fillRect(72, 220, 340, 3);
+  trackedText(ctx, verse.ref.toUpperCase(), M + 56 + 22, refY, 7);
 
-  // The verse in a manuscript frame, with an illuminated initial.
-  const box = { x: 80, y: 820, w: W - 160 };
-  let fontSize = 50, lines;
-  const pad = 56;
-  do {
-    fontSize -= 2;
-    ctx.font = `${fontSize}px "EB Garamond"`;
-    lines = wrapLines(ctx, verse.text, box.w - pad * 2 - fontSize * 1.6);
-  } while (lines.length * fontSize * 1.4 > 340 && fontSize > 24);
-  const lineH = fontSize * 1.4;
-  // Wrap the text, leaving room for the initial on the first two lines.
+  // The verse, fitted to the space, with a two-line gold initial.
   const text = displayText(verse);
   const first = text[0] === "“" ? text.slice(0, 2) : text[0];
-  const capSize = fontSize * 2.9;
-  ctx.font = `700 ${capSize}px "Cormorant Garamond"`;
-  const capW = ctx.measureText(first).width + fontSize * 0.35;
-  ctx.font = `${fontSize}px "EB Garamond"`;
-  const out = [];
-  let line = "", row = 0;
-  for (const word of text.slice(first.length).split(/\s+/)) {
-    const width = box.w - pad * 2 - (row < 2 ? capW : 0);
-    const test = line ? `${line} ${word}` : word;
-    if (ctx.measureText(test).width > width && line) { out.push([line, row]); line = word; row++; }
-    else line = test;
+  const layout = (size) => {
+    ctx.font = `500 ${size * 2.75}px "Cormorant Garamond"`;
+    const capW = ctx.measureText(first).width + size * 0.3;
+    ctx.font = `400 ${size}px "EB Garamond"`;
+    const rows = [];
+    let line = "";
+    for (const word of text.slice(first.length).split(/\s+/)) {
+      const width = W - 2 * M - (rows.length < 2 ? capW : 0);
+      const test = line ? `${line} ${word}` : word;
+      if (ctx.measureText(test).width > width && line) { rows.push(line); line = word; }
+      else line = test;
+    }
+    if (line) rows.push(line);
+    return { size, capW, rows, height: Math.max(rows.length, 2) * size * 1.4 };
+  };
+  let fit = layout(50);
+  for (let size = 50; size >= 28; size -= 2) {
+    fit = layout(size);
+    if (fit.height <= 330 || (size <= 32 && fit.height <= 420)) break;
   }
-  if (line) out.push([line, row]);
-  box.h = Math.max(240, Math.round(Math.max(out.length, 2) * lineH + pad * 2 + fontSize * 1.2));
-  // Centre the frame in the space between the picture and the footer.
-  box.y = Math.round(800 + Math.max(0, (H - 110 - 800 - box.h) / 2));
+  const lineH = fit.size * 1.4;
+  const verseBottom = refY - 64;
+  const verseTop = verseBottom - fit.height;
   ctx.save();
-  ctx.shadowColor = "rgba(43,29,17,0.28)";
-  ctx.shadowBlur = 40;
-  ctx.shadowOffsetY = 10;
-  ctx.fillStyle = VELLUM;
-  ctx.fillRect(box.x, box.y, box.w, box.h);
+  ctx.shadowColor = "rgba(0,0,0,0.5)";
+  ctx.shadowBlur = 18;
+  ctx.font = `400 ${fit.size}px "EB Garamond"`;
+  ctx.fillStyle = BONE;
+  fit.rows.forEach((row, i) => ctx.fillText(row, M + (i < 2 ? fit.capW : 0), verseTop + fit.size + i * lineH));
   ctx.restore();
-  ctx.strokeStyle = "#5a4630";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(box.x, box.y, box.w, box.h);
-  ctx.strokeStyle = GOLD;
-  ctx.strokeRect(box.x + 12, box.y + 12, box.w - 24, box.h - 24);
+  ctx.save();
+  ctx.shadowColor = "rgba(212,162,76,0.4)";
+  ctx.shadowBlur = 28;
+  ctx.font = `500 ${fit.size * 2.75}px "Cormorant Garamond"`;
+  ctx.fillStyle = "#f1d79a";
+  ctx.fillText(first, M - fit.size * 0.04, verseTop + fit.size + lineH);   // sits on the second line
+  ctx.restore();
 
-  ctx.font = `700 ${capSize}px "Cormorant Garamond"`;
-  ctx.fillStyle = GOLD;
-  ctx.fillText(first, box.x + pad, box.y + pad + capSize * 0.72);
-  ctx.font = `${fontSize}px "EB Garamond"`;
-  ctx.fillStyle = INK;
-  out.forEach(([text, r]) => ctx.fillText(text, box.x + pad + (r < 2 ? capW : 0), box.y + pad + fontSize + r * lineH));
-  ctx.font = `${Math.round(fontSize * 0.9)}px "EB Garamond"`;
-  ctx.fillStyle = GOLD;
-  ctx.textAlign = "right";
-  const refText = `— ${verse.ref}`;
-  ctx.fillText(refText, box.x + box.w - pad, box.y + box.h - pad * 0.7);
-  ctx.textAlign = "left";
+  // The title word in gold leaf, with a crimson-and-gold rule beneath it.
+  const titleY = verseTop - 56 - 24 - 6;
+  let tSize = 104;
+  ctx.font = `500 ${tSize}px "Cormorant Garamond"`;
+  while (trackedWidth(ctx, verse.word, tSize * 0.2) > W - 2 * M && tSize > 56) ctx.font = `500 ${(tSize -= 4)}px "Cormorant Garamond"`;
+  const gilt = ctx.createLinearGradient(0, titleY - tSize * 0.72, 0, titleY);
+  gilt.addColorStop(0, "#f1d79a");
+  gilt.addColorStop(0.58, GOLD);
+  gilt.addColorStop(1, "#9c7433");
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.6)";
+  ctx.shadowBlur = 14;
+  ctx.fillStyle = gilt;
+  trackedText(ctx, verse.word, M, titleY, tSize * 0.2);
+  ctx.restore();
+  ctx.fillStyle = CRIMSON;
+  ctx.fillRect(M, titleY + 24, 28, 1);
+  const rule = ctx.createLinearGradient(M + 28, 0, M + 300, 0);
+  rule.addColorStop(0, GOLD);
+  rule.addColorStop(1, "rgba(212,162,76,0)");
+  ctx.fillStyle = rule;
+  ctx.fillRect(M + 28, titleY + 24, 272, 1);
 
-  ctx.fillStyle = "#5a4630";
-  ctx.font = `italic 26px "EB Garamond"`;
-  ctx.fillText(`${dateText(offsetDays)} · ${DATA.translation} · verse-ai`, 80, H - 50);
+  // 4. A single hairline passe-partout, and fine grain.
+  ctx.strokeStyle = "rgba(212,162,76,0.32)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(36.5, 36.5, W - 73, H - 73);
+  const noise = document.createElement("canvas");
+  noise.width = noise.height = 128;
+  const n = noise.getContext("2d");
+  const grain = n.createImageData(128, 128);
+  for (let i = 0; i < grain.data.length; i += 4) {
+    const g = Math.floor(Math.random() * 256);
+    grain.data[i] = grain.data[i + 1] = grain.data[i + 2] = g;
+    grain.data[i + 3] = 255;
+  }
+  n.putImageData(grain, 0, 0);
+  ctx.save();
+  ctx.globalCompositeOperation = "overlay";
+  ctx.globalAlpha = 0.07;
+  ctx.fillStyle = ctx.createPattern(noise, "repeat");
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
   return c;
 }
 
