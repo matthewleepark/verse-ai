@@ -6,118 +6,139 @@
 <title>verse-ai · Daily Verse</title>
 <style>
   :root {
-    --paper: #efe9dc;
-    --ink: #121110;
-    --white: #fffdf7;
+    --parchment: #efe4cc;
+    --vellum: #f7efdc;
+    --ink: #2b1d11;
+    --ink-soft: #5a4630;
+    --gold: #a8802f;
+    --gold-light: #d6b45e;
   }
   * { box-sizing: border-box; margin: 0; }
-  html, body { height: 100%; background: var(--paper); overflow: hidden; }
-  body { font-family: "Comic Neue", "Segoe UI", Arial, sans-serif; color: var(--ink); }
+  html, body { height: 100%; background: var(--parchment); overflow: hidden; }
+  body { font-family: "EB Garamond", Garamond, Georgia, serif; color: var(--ink); }
 
   canvas, .fallback-img { position: fixed; inset: 0; width: 100vw; height: 100vh; }
   canvas { cursor: crosshair; touch-action: none; }
-  .fallback-img { object-fit: contain; object-position: 58% 100%; filter: grayscale(1); display: none; }
+  .fallback-img { object-fit: contain; object-position: 58% 100%; filter: sepia(0.5); display: none; }
   .static .fallback-img { display: block; }
 
   /* ---------- Top: date, title word, controls ---------- */
   .heading {
     position: fixed;
-    top: clamp(14px, 2.5vh, 32px);
-    left: clamp(16px, 3vw, 56px);
+    top: clamp(16px, 3vh, 40px);
+    left: clamp(18px, 3.5vw, 64px);
     pointer-events: none;
   }
   .date {
-    display: inline-block;
-    font-weight: 700;
-    font-size: clamp(14px, 1.25vw, 22px);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    background: var(--white);
-    border: 3px solid var(--ink);
-    padding: 4px 12px;
-    box-shadow: 4px 4px 0 var(--ink);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7em;
+    font-size: clamp(14px, 1.15vw, 21px);
+    font-variant: small-caps;
+    letter-spacing: 0.14em;
+    color: var(--ink);
+    background: rgb(247 239 220 / 0.9);
+    padding: 2px 12px 3px 0;
+    box-shadow: 0 0 14px 6px rgb(247 239 220 / 0.9);
   }
-  .date .badge { background: var(--ink); color: var(--white); padding: 0 8px; margin-left: 8px; }
+  .date::before { content: ""; width: 2.2em; height: 1px; background: var(--gold); }
+  .date .badge {
+    font-size: 0.82em;
+    letter-spacing: 0.18em;
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    padding: 0 0.6em;
+  }
   .title {
-    margin-top: 0.15em;
-    font-family: "Bangers", "Impact", sans-serif;
-    font-size: clamp(56px, 9.5vw, 190px);
-    line-height: 0.95;
-    letter-spacing: 0.05em;
-    color: var(--white);
-    -webkit-text-stroke: 0.045em var(--ink);
-    paint-order: stroke fill;
-    text-shadow: 0.06em 0.06em 0 var(--ink);
-    transform: rotate(-3deg);
-    transform-origin: left center;
-    transition: opacity 0.25s ease, transform 0.25s ease;
+    margin-top: 0.08em;
+    font-family: "Cormorant Garamond", "EB Garamond", Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(54px, 8.5vw, 170px);
+    line-height: 1;
+    letter-spacing: 0.08em;
+    color: var(--ink);
+    /* A soft glow of parchment behind the letters keeps them readable over the art. */
+    text-shadow: 0 0 0.12em var(--vellum), 0 0 0.3em var(--vellum), 0 0 0.6em rgb(247 239 220 / 0.8);
+  }
+  .title::after {
+    content: "";
+    display: block;
+    width: 38%;
+    height: 2px;
+    margin-top: 0.08em;
+    background: linear-gradient(90deg, var(--gold), rgb(168 128 47 / 0));
   }
 
   .controls {
     position: fixed;
-    top: clamp(14px, 2.5vh, 32px);
-    right: clamp(16px, 3vw, 56px);
+    top: clamp(16px, 3vh, 40px);
+    right: clamp(18px, 3.5vw, 64px);
     display: flex;
-    gap: 12px;
+    gap: 10px;
     z-index: 6;               /* stays clickable above the Context drawer */
   }
   .controls button {
-    font-family: "Bangers", "Impact", sans-serif;
-    font-size: clamp(20px, 1.7vw, 30px);
-    letter-spacing: 0.06em;
-    min-width: 64px;
-    min-height: 56px;
-    padding: 6px 20px;
+    font-family: "EB Garamond", Garamond, Georgia, serif;
+    font-size: clamp(18px, 1.35vw, 24px);
+    font-variant: small-caps;
+    letter-spacing: 0.1em;
+    min-width: 56px;
+    min-height: 52px;
+    padding: 6px 18px;
     color: var(--ink);
-    background: var(--white);
-    border: 3px solid var(--ink);
-    box-shadow: 5px 5px 0 var(--ink);
+    background: rgb(247 239 220 / 0.92);
+    border: 1px solid var(--ink-soft);
+    outline: 1px solid rgb(168 128 47 / 0.55);
+    outline-offset: -5px;
+    border-radius: 2px;
+    box-shadow: 0 2px 10px rgb(43 29 17 / 0.18);
     cursor: pointer;
-    transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease;
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
   }
   .controls button:hover, .controls button:focus-visible {
-    transform: translate(-2px, -2px);
-    box-shadow: 7px 7px 0 var(--ink);
-    background: #fff3c4;
-    outline: none;
+    background: #f3e2b8;
+    box-shadow: 0 3px 16px rgb(168 128 47 / 0.35);
+    outline-color: var(--gold);
   }
-  .controls button:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 var(--ink); }
-  .controls button:disabled { color: #a8a298; cursor: default; transform: none; box-shadow: 5px 5px 0 var(--ink); background: var(--white); }
-  .controls button[aria-pressed="true"], .controls button[aria-expanded="true"] { background: var(--ink); color: var(--white); }
-  .controls .arrow { font-size: 1.25em; line-height: 0; }
-  .controls .nav-label { font-size: 0.72em; letter-spacing: 0.08em; margin: 0 0.5em; }
+  .controls button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .controls button:active { background: #ead39c; }
+  .controls button:disabled { color: rgb(90 70 48 / 0.45); cursor: default; background: rgb(247 239 220 / 0.92); box-shadow: 0 2px 10px rgb(43 29 17 / 0.1); }
+  .controls button[aria-pressed="true"], .controls button[aria-expanded="true"] { background: var(--ink); color: var(--vellum); outline-color: var(--gold-light); }
+  .controls .arrow { font-size: 1.35em; line-height: 0; }
+  .controls .nav-label { font-size: 0.82em; margin: 0 0.45em; }
 
   /* Share menu */
   .share { position: relative; }
   .menu {
     position: absolute;
-    top: calc(100% + 12px);
+    top: calc(100% + 10px);
     right: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     padding: 10px;
-    background: var(--white);
-    border: 3px solid var(--ink);
-    box-shadow: 6px 6px 0 var(--ink);
+    background: var(--vellum);
+    border: 1px solid var(--ink-soft);
+    box-shadow: 0 8px 28px rgb(43 29 17 / 0.25);
     z-index: 6;
   }
   .menu[hidden] { display: none; }
-  .menu button { white-space: nowrap; box-shadow: 3px 3px 0 var(--ink); min-height: 48px; text-align: left; }
+  .menu button { white-space: nowrap; min-height: 48px; text-align: left; box-shadow: none; }
 
   .toast {
     position: fixed;
     left: 50%;
     bottom: clamp(24px, 6vh, 64px);
-    transform: translate(-50%, 20px);
-    font-weight: 700;
-    font-size: clamp(15px, 1.1vw, 19px);
+    transform: translate(-50%, 16px);
+    font-size: clamp(16px, 1.15vw, 20px);
+    font-style: italic;
     background: var(--ink);
-    color: var(--white);
-    padding: 10px 18px;
+    color: var(--vellum);
+    border: 1px solid var(--gold);
+    padding: 10px 20px;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.25s ease, transform 0.25s ease;
+    transition: opacity 0.3s ease, transform 0.3s ease;
     z-index: 7;
   }
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
@@ -127,56 +148,63 @@
   .title .ch { display: inline-block; }
   @media (max-width: 1100px) { .controls .nav-label { display: none; } }
 
-  /* ---------- Bottom left: the verse in a comic caption box ---------- */
+  /* ---------- Bottom left: the verse, framed like a manuscript page ---------- */
   .caption {
     --ts: 1;
     position: fixed;
-    left: clamp(16px, 3vw, 56px);
-    bottom: clamp(18px, 4vh, 48px);
-    width: min(36vw, 640px);
-    background: var(--white);
-    border: 3px solid var(--ink);
-    box-shadow: 8px 8px 0 var(--ink);
-    padding: clamp(18px, 2vw, 32px) clamp(18px, 2vw, 32px) clamp(14px, 1.6vw, 26px);
-    transition: opacity 0.25s ease, transform 0.25s ease;
-  }
-  .caption .ref {
-    position: absolute;
-    top: -0.9em;
-    left: 18px;
-    font-family: "Bangers", "Impact", sans-serif;
-    font-size: clamp(20px, 1.8vw, 32px);
-    letter-spacing: 0.06em;
-    background: var(--ink);
-    color: var(--white);
-    padding: 2px 14px;
+    left: clamp(18px, 3.5vw, 64px);
+    bottom: clamp(20px, 4.5vh, 56px);
+    width: min(38vw, 660px);
+    background: rgb(247 239 220 / 0.95);
+    border: 1px solid var(--ink-soft);
+    outline: 1px solid var(--gold);
+    outline-offset: -8px;
+    box-shadow: 0 10px 40px rgb(43 29 17 / 0.28);
+    padding: clamp(22px, 2.3vw, 38px) clamp(24px, 2.5vw, 42px) clamp(18px, 1.8vw, 30px);
   }
   .caption .text {
-    font-weight: 700;
-    font-size: calc(clamp(17px, 1.45vw, 28px) * var(--ts));
-    line-height: 1.3;
-    text-transform: uppercase;
+    font-size: calc(clamp(19px, 1.55vw, 30px) * var(--ts));
+    line-height: 1.42;
+    color: var(--ink);
   }
+  /* An illuminated initial, as in an old Bible. */
+  .caption .text::first-letter {
+    float: left;
+    font-family: "Cormorant Garamond", "EB Garamond", Georgia, serif;
+    font-weight: 700;
+    font-size: 3.3em;
+    line-height: 0.82;
+    margin: 0.06em 0.12em 0 0;
+    color: var(--gold);
+    text-shadow: 0 1px 0 rgb(43 29 17 / 0.25);
+  }
+  .caption .ref {
+    margin-top: 0.8em;
+    font-size: calc(clamp(17px, 1.3vw, 24px) * var(--ts));
+    font-variant: small-caps;
+    letter-spacing: 0.16em;
+    color: var(--gold);
+    text-align: right;
+  }
+  .caption .ref::before { content: "— "; color: var(--ink-soft); }
 
   .hint, .credit {
     position: fixed;
-    right: clamp(16px, 3vw, 56px);
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    background: var(--white);
-    border: 2px solid var(--ink);
-    padding: 3px 10px;
+    right: clamp(18px, 3.5vw, 64px);
+    font-style: italic;
+    color: var(--ink);
+    background: rgb(247 239 220 / 0.9);
+    padding: 2px 10px;
+    box-shadow: 0 0 12px 4px rgb(247 239 220 / 0.85);
     pointer-events: none;
   }
   .hint {
-    top: calc(clamp(14px, 2.5vh, 32px) + 76px);
-    font-size: clamp(12px, 0.9vw, 15px);
-    box-shadow: 3px 3px 0 var(--ink);
+    top: calc(clamp(16px, 3vh, 40px) + 66px);
+    font-size: clamp(14px, 1vw, 17px);
     transition: opacity 1.2s ease;
   }
   .hint.gone, .drawer.open ~ .hint { opacity: 0; }
-  .credit { bottom: clamp(10px, 1.6vh, 20px); font-size: clamp(10px, 0.68vw, 12px); }
+  .credit { bottom: clamp(10px, 1.6vh, 20px); font-size: clamp(11px, 0.75vw, 13px); }
 
   /* ---------- Context drawer ---------- */
   .drawer {
@@ -184,50 +212,58 @@
     top: 0;
     right: 0;
     bottom: 0;
-    width: min(500px, 92vw);
+    width: min(520px, 92vw);
     overflow-y: auto;
-    background: var(--white);
-    border-left: 4px solid var(--ink);
-    box-shadow: -10px 0 0 rgb(18 17 16 / 0.18);
+    background: var(--vellum);
+    border-left: 1px solid var(--ink-soft);
+    box-shadow: -14px 0 40px rgb(43 29 17 / 0.22);
     /* The top is left free so the day and Share buttons stay usable while it's open. */
-    padding: calc(clamp(14px, 2.5vh, 32px) + 92px) 30px 40px;
-    font-family: "Segoe UI", Arial, sans-serif;
-    font-size: 17px;
-    line-height: 1.55;
+    padding: calc(clamp(16px, 3vh, 40px) + 88px) 36px 44px;
+    font-size: 19px;
+    line-height: 1.6;
     transform: translateX(105%);
-    transition: transform 0.3s ease;
+    transition: transform 0.4s ease;
     z-index: 5;
   }
   .drawer.open { transform: none; }
-  .drawer .label { font-family: "Bangers", "Impact", sans-serif; font-size: 22px; letter-spacing: 0.1em; }
-  .drawer h2 { font-family: "Bangers", "Impact", sans-serif; font-weight: 400; font-size: 44px; letter-spacing: 0.04em; line-height: 1; margin: 4px 0 14px; }
-  .drawer h3 {
-    display: inline-block;
-    font-family: "Bangers", "Impact", sans-serif;
-    font-weight: 400;
-    font-size: 22px;
-    letter-spacing: 0.08em;
-    background: var(--ink);
-    color: var(--white);
-    padding: 1px 10px;
-    margin: 22px 0 8px;
+  .drawer .label { font-variant: small-caps; letter-spacing: 0.2em; color: var(--gold); font-size: 18px; }
+  .drawer h2 {
+    font-family: "Cormorant Garamond", "EB Garamond", Georgia, serif;
+    font-weight: 600;
+    font-size: 42px;
+    line-height: 1.05;
+    margin: 2px 0 10px;
   }
-  .drawer .num { font-size: 0.72em; font-weight: 700; opacity: 0.5; margin-right: 0.25em; }
-  .drawer .here { font-weight: 700; background: #fff3c4; box-shadow: 0 0 0 2px #fff3c4; }
+  .drawer h3 {
+    font-weight: 500;
+    font-size: 17px;
+    font-variant: small-caps;
+    letter-spacing: 0.18em;
+    color: var(--gold);
+    margin: 26px 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 0.7em;
+  }
+  .drawer h3::after { content: ""; flex: 1; height: 1px; background: rgb(168 128 47 / 0.45); }
+  .drawer .num { font-size: 0.68em; color: var(--gold); vertical-align: super; margin-right: 0.2em; }
+  .drawer .here { background: rgb(214 180 94 / 0.28); box-shadow: 0 0 0 2px rgb(214 180 94 / 0.28); }
   .drawer .close {
     position: absolute;
-    top: calc(clamp(14px, 2.5vh, 32px) + 86px);
-    right: 22px;
-    width: 48px;
-    height: 48px;
-    font-family: "Bangers", "Impact", sans-serif;
+    top: calc(clamp(16px, 3vh, 40px) + 82px);
+    right: 24px;
+    width: 46px;
+    height: 46px;
+    font-family: "EB Garamond", Georgia, serif;
     font-size: 30px;
     line-height: 1;
-    background: var(--white);
-    border: 3px solid var(--ink);
-    box-shadow: 4px 4px 0 var(--ink);
+    color: var(--ink);
+    background: none;
+    border: 1px solid var(--ink-soft);
+    border-radius: 2px;
     cursor: pointer;
   }
+  .drawer .close:hover { background: #f3e2b8; }
 
   /* Phones and narrow windows: controls in a row across the top, then the title,
      with the caption across the bottom. */
@@ -238,13 +274,13 @@
       top: 12px;
       display: grid;
       grid-template-columns: 0.8fr 1.3fr 0.8fr 1.5fr 1.3fr;
-      gap: 8px;
+      gap: 6px;
     }
-    .controls button { min-width: 0; padding: 4px 6px; font-size: clamp(16px, 4.6vw, 24px); }
+    .controls button { min-width: 0; padding: 4px 4px; font-size: clamp(15px, 4.2vw, 22px); letter-spacing: 0.04em; }
     .controls .nav-label { display: none; }
     .share > button { width: 100%; }
-    .heading { top: 88px; left: 14px; }
-    .title { font-size: clamp(44px, 14vw, 120px); }
+    .heading { top: 84px; left: 16px; }
+    .title { font-size: clamp(44px, 13vw, 110px); }
     .caption { width: auto; right: 14px; left: 14px; }
     .hint { display: none; }
   }
@@ -257,7 +293,7 @@
 </head>
 <body>
 <img class="fallback-img" id="fallbackImg" alt="">
-<canvas id="scene" aria-label="Comic-style sea around a woodcut of Jesus catching Peter. Click the water to make a splash."></canvas>
+<canvas id="scene" aria-label="An engraved sea around a woodcut of Jesus catching Peter. Click the water to make ripples."></canvas>
 
 <header class="heading">
   <div class="date" id="date"></div>
@@ -281,8 +317,8 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <section class="caption" id="caption" aria-live="polite">
-  <div class="ref" id="verseRef"></div>
   <p class="text" id="verseText"></p>
+  <div class="ref" id="verseRef"></div>
 </section>
 
 <aside class="drawer" id="drawer" aria-label="Context for this verse">
@@ -291,7 +327,7 @@
   <div id="drawerBody"></div>
 </aside>
 
-<p class="hint" id="hint">Click the water to splash · Arrow keys change the day · C for context · Space pauses</p>
+<p class="hint" id="hint">Touch the water · Arrow keys change the day · C for context · Space pauses</p>
 <p class="credit">Art: Julius Schnorr von Carolsfeld, 1860 (public domain) · <span id="translation"></span></p>
 
 <script>
@@ -311,7 +347,6 @@ const FIGURE = [
 const ART_HORIZON = 0.25;          // where the sea meets the sky inside the woodcut
 const JESUS_HEAD = [0.40, 0.09];   // centre of the light rays, in artwork coordinates
 const MAX_RIPPLES = 12;
-const FPS_STEP = 10;               // waves move in steps, like hand-drawn animation
 const TRAVEL_MS = 1150;            // how long the scene glides when moving between verses
 // Testing switches: ?nograin  ?t=SECONDS (freeze time)  ?ripple=X,Y (screen fractions)  ?panel  ?lowres
 const PARAMS = new URLSearchParams(location.search);
@@ -339,10 +374,10 @@ uniform vec4 uRipples[${MAX_RIPPLES}];   // x, y (screen fractions), start time,
 // and uMood (0..1, one value per verse) sets how stormy the sky is.
 uniform float uTravel, uPulse, uProgress, uDir, uMood;
 
-const vec3 PAPER = vec3(0.937, 0.914, 0.863);
-const vec3 WHITE = vec3(1.0, 0.992, 0.969);
-const vec3 INK = vec3(0.071, 0.067, 0.063);
-const int ROWS = 18;
+const vec3 VELLUM = vec3(0.969, 0.937, 0.863);
+const vec3 INK = vec3(0.169, 0.114, 0.067);
+const vec3 GOLD = vec3(0.84, 0.66, 0.30);
+const int ROWS = 16;
 
 float hash1(float n) { return fract(sin(n * 127.1) * 43758.5453); }
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -357,170 +392,133 @@ float fbm(vec2 p) {
   return v;
 }
 
-// Halftone dots: returns 1 where ink should be printed for a given darkness (0..1).
-float halftone(float darkness, float cellPx) {
-  vec2 q = mat2(0.7071, -0.7071, 0.7071, 0.7071) * (gl_FragCoord.xy / (cellPx * uDpr));
-  float d = length(fract(q) - 0.5);
-  float r = sqrt(clamp(darkness, 0.0, 1.0)) * 0.68;
-  return 1.0 - smoothstep(r - 0.07, r + 0.07, d);
+// Engraving: parallel lines along coordPx (pixels), spaced gapPx apart. Darker tones
+// are made by thicker lines, as in a steel engraving. Returns ink coverage 0..1.
+float engrave(float coordPx, float gapPx, float darkness) {
+  float d = abs(fract(coordPx / gapPx) - 0.5) * gapPx;
+  float halfWidth = clamp(darkness, 0.0, 1.0) * gapPx * 0.48;
+  return 1.0 - smoothstep(halfWidth - 0.7, halfWidth + 0.7, d);
 }
 
 // Wave row i: crest height (screen y) at p.x, plus the phase used for shading.
-void waveRow(int i, float px, float ts, out float crest, out float u, out float amp, out float spacing) {
+void waveRow(int i, float px, float t, out float crest, out float u, out float amp, out float spacing) {
   float fi = float(i);
   float k = (fi + 1.0) / float(ROWS);
   float k2 = (fi + 2.0) / float(ROWS);
   float span = 1.0 - uHorizon;
   float base = uHorizon + span * pow(k, 1.55);
   spacing = span * (pow(k2, 1.55) - pow(k, 1.55));
-  amp = 0.005 + 0.07 * pow(k, 1.6);
-  float freq = mix(60.0, 6.5, pow(k, 0.7));
-  float dir = mod(fi, 2.0) < 1.0 ? 1.0 : -0.65;
-  u = px * freq + hash1(fi) * 6.2831 + ts * dir * mix(0.9, 2.2, k)
+  amp = 0.004 + 0.05 * pow(k, 1.6);
+  float freq = mix(55.0, 6.0, pow(k, 0.7));
+  float dir = mod(fi, 2.0) < 1.0 ? 1.0 : -0.6;
+  u = px * freq + hash1(fi) * 6.2831 + t * dir * mix(0.35, 0.9, k)
     + uTravel * mix(1.2, 5.0, k);                    // parallax: near rows slide farther
-  // Sharp peaks and round troughs, like a woodblock-print wave.
-  crest = base - amp * pow(1.0 - abs(sin(u)), 2.2)
-               - amp * 0.3 * sin(u * 0.43 + fi + ts * 0.7)
-               + 0.004 * k * sin(ts * 2.0 + fi);
+  // Long rounded swells with softly pointed crests.
+  crest = base - amp * pow(0.5 + 0.5 * sin(u), 1.6)
+               - amp * 0.25 * sin(u * 0.47 + fi + t * 0.3)
+               + 0.003 * k * sin(t * 0.8 + fi);
 }
 
 void main() {
   float aspect = uRes.x / uRes.y;
   float pxSize = 1.0 / uRes.y;                       // one pixel, in screen-height units
-  float step_ = floor(uTime * ${FPS_STEP}.0);
-  float ts = step_ / ${FPS_STEP}.0;                  // stepped time: comic-style motion
-  // "Boil": the linework wobbles slightly on every step, like redrawn frames.
-  vec2 boil = (vec2(hash1(step_), hash1(step_ + 7.3)) - 0.5) * 0.0016;
-  vec2 uv = vUv + boil;
+  vec2 uv = vUv;
   vec2 p = vec2(uv.x * aspect, uv.y);
+  vec2 frag = gl_FragCoord.xy;
+  float t = uTime;
+  float ink = 0.0;     // engraved ink, 0..1
+  float light = 0.0;   // warm golden light, 0..1
 
-  float ink = 0.0;     // 1 = black ink
-  float white = 0.0;   // 1 = bright paper (foam, highlights)
+  vec2 sun = vec2(uSun.x * aspect, uSun.y);
+  float sunDist = length(p - sun);
 
   if (uv.y < uHorizon) {
-    // ---------- Sky ----------
+    // ---------- Sky: horizontal engraved lines, heavier at the top ----------
     float h = uv.y / uHorizon;
-    float dark = mix(mix(0.30, 0.50, uMood), 0.06, h);   // stormy at the top, lighter at the horizon
-    vec2 sun = vec2(uSun.x * aspect, uSun.y);
-    vec2 dv = p - sun;
-    float dist = length(dv);
-    float ang = atan(dv.y, dv.x);
-    float ray = step(0.5, fract(ang * 22.0 / 6.2831 + ts * 0.04 + uTravel * 0.06));
-    float rayReach = 1.0 - smoothstep(0.05, 1.1, dist);
-    dark = mix(dark, ray > 0.5 ? 0.02 : dark * 1.15, rayReach * 0.9);
-    float glow = 1.0 - smoothstep(0.0, 0.16, dist);
-    dark *= 1.0 - glow;
+    float dark = mix(mix(0.40, 0.62, uMood), 0.08, smoothstep(0.0, 1.0, h));
 
-    // Storm clouds drifting in steps, with inked outlines and shaded undersides.
-    vec2 cp = p * vec2(1.5, 3.4) + vec2(ts * 0.035 + uTravel * 0.45, 0.0);
+    // Clouds: lighter tops, shaded undersides, drifting slowly.
+    vec2 cp = p * vec2(1.4, 3.0) + vec2(t * 0.006 + uTravel * 0.45, 0.0);
     float c = fbm(cp);
-    float cloudLevel = mix(0.56, 0.50, uMood);       // stormier verses get more cloud
-    float cloudZone = 1.0 - smoothstep(0.55, 0.95, h);
-    float inCloud = step(cloudLevel, c) * cloudZone;
-    if (inCloud > 0.5) {
-      float under = smoothstep(0.0, 0.08, fbm(cp + vec2(0.0, 0.25)) - c);
-      dark = mix(0.04, 0.45, under);
-    }
-    float edge = abs(c - cloudLevel) / max(fwidth(c), 1e-4);
-    ink = max(ink, (1.0 - smoothstep(1.0, 2.2, edge)) * cloudZone);
-    ink = max(ink, halftone(dark, 7.0));
+    float level = mix(0.58, 0.50, uMood);            // stormier verses get more cloud
+    float zone = 1.0 - smoothstep(0.6, 1.0, h);
+    float cloud = smoothstep(level, level + 0.05, c) * zone;
+    float under = smoothstep(0.0, 0.08, fbm(cp + vec2(0.0, 0.22)) - c);
+    dark = mix(dark, mix(0.04, 0.55, under), cloud);
 
-    // Rain: thin diagonal streaks, redrawn every step.
-    vec2 rq = mat2(0.956, -0.292, 0.292, 0.956) * p;
-    float col = floor(rq.x * 130.0);
-    float rnd = hash1(col);
-    float line = 1.0 - smoothstep(0.08, 0.2, abs(fract(rq.x * 130.0) - 0.5));
-    float streak = step(0.9, rnd) * step(fract(rq.y * 1.4 + ts * (1.5 + rnd * 2.0) + rnd * 9.0), 0.22);
-    ink = max(ink, line * streak * (1.0 - glow) * 0.85);
+    // Light from behind Jesus: rays and a glow that clear away the lines.
+    vec2 dv = p - sun;
+    float ang = atan(dv.y, dv.x);
+    float ray = smoothstep(0.35, 0.7, 0.5 + 0.5 * sin(ang * 26.0 + uTravel * 0.4 + t * 0.04));
+    float reach = 1.0 - smoothstep(0.05, 1.0, sunDist);
+    dark *= 1.0 - ray * reach * 0.8;
+    float glow = 1.0 - smoothstep(0.0, 0.35, sunDist);
+    dark *= 1.0 - glow;
+    light = max(light, glow * 0.85 + ray * reach * 0.3);
+
+    float coord = frag.y + sin(frag.x * 0.004 + h * 3.0) * 2.0 * uDpr;
+    ink = engrave(coord, mix(3.2, 4.6, h) * uDpr, dark);
   } else {
-    // ---------- Sea: rows of comic waves, nearer rows drawn over farther ones ----------
+    // ---------- Sea: rows of engraved swells, nearer rows drawn over farther ones ----------
     int cur = -1;
     float curCrest = 0.0, curU = 0.0, curAmp = 0.0, curSpacing = 1.0;
     for (int i = 0; i < ROWS; i++) {
       float crest, u, amp, spacing;
-      waveRow(i, p.x, ts, crest, u, amp, spacing);
+      waveRow(i, p.x, t, crest, u, amp, spacing);
       if (uv.y > crest) { cur = i; curCrest = crest; curU = u; curAmp = amp; curSpacing = spacing; }
     }
     if (cur < 0) {
-      // Calm strip just below the horizon.
-      ink = step(fract((uv.y - uHorizon) / (2.5 * pxSize * uDpr)), 0.35) * 0.6;
+      ink = engrave(frag.y, 2.6 * uDpr, 0.3);        // the calm strip just below the horizon
     } else {
       float k = (float(cur) + 1.0) / float(ROWS);
       float d = uv.y - curCrest;
       float dpx = d / pxSize;
       float dn = d / (curSpacing + curAmp * 0.6);
-      float peak = pow(1.0 - abs(sin(curU)), 6.0);
-      float foam = (0.10 + 0.38 * peak) * (0.65 + 0.35 * sin(curU * 5.0 + float(cur) * 1.7));
-      float lineW = mix(1.0, 3.8, k) * uDpr;
+      float gap = mix(2.6, 5.5, k) * uDpr;
+      float lineW = mix(0.8, 2.2, k) * uDpr;
+      float foam = 0.06 + 0.22 * pow(0.5 + 0.5 * sin(curU), 6.0);
       if (dpx < lineW) {
-        ink = 1.0;                                            // crest outline
+        ink = 1.0;                                    // the crest's outline
       } else if (dn < foam) {
-        white = 1.0;                                          // foam cap
-      } else if (dpx < lineW + foam * (curSpacing + curAmp * 0.6) / pxSize + lineW * 0.7) {
-        ink = 1.0;                                            // line under the foam
+        ink = engrave(dpx, gap, 0.04);                // bright foam along the crest
       } else {
         float body = smoothstep(foam, 1.0, dn);
-        float darkness = mix(0.12, 0.8, body) * mix(0.45, 1.0, k);
-        ink = halftone(darkness, mix(4.0, 7.0, k));
-        float gap = mix(3.0, 7.5, k) * uDpr;
-        float hatch = step(fract(dpx / gap), 0.3) * step(0.55, body);
-        ink = max(ink, hatch);
+        float darkness = mix(0.12, 0.78, body) * mix(0.55, 1.0, k);
+        ink = engrave(dpx, gap, darkness);            // lines follow the wave
+        if (darkness > 0.55) {                        // cross-hatching in the deepest troughs
+          ink = max(ink, engrave((frag.x + frag.y) * 0.7071, gap * 1.25, (darkness - 0.55) * 1.4));
+        }
       }
-    }
-
-    // Spray flicking off the crests of the nearest waves.
-    for (int i = ROWS - 7; i < ROWS; i++) {
-      if (cur > i) continue;                                  // hidden behind a nearer wave
-      float crest, u, amp, spacing;
-      waveRow(i, p.x, ts, crest, u, amp, spacing);
-      float n = floor(u / 3.14159 + 0.5);                     // nearest peak
-      if (hash(vec2(n, float(i))) < 0.45) continue;
-      float uPeak = n * 3.14159;
-      float xPeak = p.x - (u - uPeak) / mix(60.0, 6.5, pow((float(i) + 1.0) / float(ROWS), 0.7));
-      for (int j = 0; j < 3; j++) {
-        vec3 r3 = vec3(hash(vec2(n + float(j), step_ + float(i))), hash(vec2(n * 1.7, float(j) + step_)), hash(vec2(float(j), n + float(i))));
-        vec2 c = vec2(xPeak + (r3.x - 0.5) * amp * 1.6, crest - amp * (0.15 + r3.y * 0.9));
-        float rad = amp * (0.06 + 0.08 * r3.z);
-        float dd = length(vec2(p.x, uv.y) - c);
-        if (dd < rad) { white = 1.0; ink = 0.0; }
-        if (abs(dd - rad) < 1.2 * pxSize * uDpr) ink = 1.0;
-      }
+      // A path of sunlight glinting on the water beneath Jesus.
+      float q = (uv.x - uSun.x) * aspect * 3.5;
+      float glint = smoothstep(0.55, 1.0, 0.5 + 0.5 * sin(curU * 3.0 + t * 0.8));
+      light = max(light, exp(-q * q) * (1.0 - smoothstep(0.0, 0.45, uv.y - uHorizon)) * glint * 0.55);
     }
   }
 
-  // ---------- Splashes from clicks and the mouse ----------
+  // ---------- Ripples from clicks and the mouse: fine engraved rings ----------
   for (int i = 0; i < ${MAX_RIPPLES}; i++) {
     vec4 r = uRipples[i];
-    float age = floor((uTime - r.z) * ${FPS_STEP}.0) / ${FPS_STEP}.0;
-    if (r.w <= 0.0 || age < 0.0 || age > 3.0) continue;
-    vec2 c = vec2(r.x * aspect, r.y);
-    if (r.y > uHorizon) {
-      vec2 dv = p - c;
-      dv.y *= 3.2;                                            // flattened rings: water seen at an angle
-      float dist = length(dv);
-      for (int n = 0; n < 3; n++) {
-        float rad = age * 0.2 * r.w - float(n) * 0.045;
-        if (rad <= 0.0) continue;
-        float thick = (3.0 * (1.0 - age / 3.0) * r.w + 1.0) * pxSize * uDpr;
-        if (abs(dist - rad) < thick) { ink = 1.0; white = 0.0; }
-        else if (dist < rad - thick && dist > rad - 0.02) { white = 1.0; ink = 0.0; }
-      }
-    }
-    if (age < 0.9 && r.w > 0.5) {                             // droplets thrown up by a click
-      for (int j = 0; j < 7; j++) {
-        float hx = hash(vec2(float(j), r.z)), hy = hash(vec2(r.z, float(j)));
-        vec2 v = vec2((hx - 0.5) * 0.35, 0.45 + hy * 0.4);
-        vec2 dp = c + vec2(v.x * age, -v.y * age + 0.9 * age * age);
-        float rad = 0.006 + 0.004 * hy;
-        float dd = length(p - dp);
-        if (dd < rad) { white = 1.0; ink = 0.0; }
-        if (abs(dd - rad) < 1.3 * pxSize * uDpr) ink = 1.0;
-      }
+    float age = uTime - r.z;
+    if (r.w <= 0.0 || age < 0.0 || age > 4.0 || r.y <= uHorizon) continue;
+    vec2 dv = p - vec2(r.x * aspect, r.y);
+    dv.y *= 3.2;                                      // flattened rings: water seen at an angle
+    float dist = length(dv);
+    float fade = 1.0 - age / 4.0;
+    for (int n = 0; n < 4; n++) {
+      float rad = age * 0.16 * r.w - float(n) * 0.035;
+      if (rad <= 0.0) continue;
+      float thick = (1.3 * fade * r.w + 0.5) * pxSize * uDpr;
+      if (abs(dist - rad) < thick) ink = mix(ink, 1.0, fade);
+      else if (dist < rad - thick && dist > rad - 0.012) { ink *= 1.0 - 0.8 * fade; light = max(light, 0.3 * fade * r.w); }
     }
   }
 
-  vec3 col = mix(PAPER, INK, clamp(ink, 0.0, 1.0));
-  col = mix(col, WHITE, white);
+  vec3 col = mix(VELLUM, INK, clamp(ink, 0.0, 1.0) * 0.92);
+  // Parchment: soft stains and uneven tone.
+  float stain = fbm(vUv * vec2(aspect, 1.0) * 2.6 + 11.0);
+  col = mix(col, col * vec3(0.92, 0.86, 0.76), smoothstep(0.45, 0.8, stain) * 0.4);
+  col = mix(col, col * 0.55 + (VELLUM + GOLD * 0.25) * 0.5, clamp(light, 0.0, 1.0) * 0.55);
 
   // ---------- The woodcut figures, cut out with the outline ----------
   vec2 iuv = (vUv - uFig.xy) / uFig.zw;
@@ -530,32 +528,34 @@ void main() {
     m *= 1.0 - smoothstep(0.86, 0.995, iuv.x);
     m *= smoothstep(0.0, 0.08, iuv.y);
     float lum = dot(texture(uImage, iuv).rgb, vec3(0.299, 0.587, 0.114));
-    vec3 art = mix(INK, WHITE, smoothstep(0.12, 0.82, lum));
-    // Near the cut edge, print the woodcut's lines over the sea (multiply) instead of
+    vec3 art = mix(INK, VELLUM, smoothstep(0.1, 0.85, lum));
+    // Near the cut edge, print the woodcut's lines over the scene (multiply) instead of
     // pasting its white paper on top, so there's no pale halo around the figures.
-    vec3 overprint = col * art / WHITE;
+    vec3 overprint = col * art / VELLUM;
     vec3 blended = mix(overprint, art, smoothstep(0.72, 1.0, m));
     col = mix(col, blended, smoothstep(0.0, 0.3, m));
+    // A faint golden light on Jesus from the glow behind him.
+    col = mix(col, col * (vec3(1.0) + GOLD * 0.35), (1.0 - smoothstep(0.0, 0.3, sunDist)) * m * 0.5);
   }
 
-  // ---------- Moving between verses: a soft sweep of light and a few drifting motes ----------
+  // ---------- Moving between verses: a warm sweep of light and drifting gold motes ----------
   if (uPulse > 0.001) {
     float sweepX = uDir > 0.0 ? mix(-0.25, 1.25, uProgress) : mix(1.25, -0.25, uProgress);
-    float s = (vUv.x - sweepX) / 0.16;
-    col = mix(col, WHITE, uPulse * 0.2 + exp(-s * s) * uPulse * 0.38);
+    float s = (vUv.x - sweepX) / 0.18;
+    col = mix(col, VELLUM + GOLD * 0.12, uPulse * 0.16 + exp(-s * s) * uPulse * 0.34);
     vec2 g = vec2(vUv.x * aspect, vUv.y) * 16.0 - vec2(uTravel * 5.0, uProgress * 0.6);
     vec2 cell = floor(g);
     if (hash(cell) > 0.88) {
       vec2 at = vec2(hash(cell + 3.1), hash(cell + 7.7)) * 0.8 + 0.1;
       float d = length(fract(g) - at);
-      col = mix(col, WHITE, (1.0 - smoothstep(0.015, 0.055, d)) * uPulse * 0.9);
+      col = mix(col, GOLD + 0.12, (1.0 - smoothstep(0.012, 0.05, d)) * uPulse * 0.85);
     }
   }
 
-  // Paper texture that shifts a little each step, plus a soft vignette.
-  col += (hash(floor(gl_FragCoord.xy / uDpr) + step_ * 0.37) - 0.5) * 0.06 * uGrain;
+  // Paper grain and aged, darker edges.
+  col += (hash(floor(gl_FragCoord.xy / uDpr)) - 0.5) * 0.035 * uGrain;
   float v = length((vUv - 0.5) * vec2(1.0, 1.1));
-  col *= 1.0 - smoothstep(0.55, 0.95, v) * 0.25;
+  col = mix(col, col * vec3(0.78, 0.68, 0.55), smoothstep(0.5, 0.95, v) * 0.55);
   outColor = vec4(col, 1.0);
 }`;
 
@@ -626,7 +626,7 @@ function fillText() {
   }));
   $("title").setAttribute("aria-label", verse.word);
   $("verseRef").textContent = verse.ref;
-  $("verseText").textContent = verse.text;
+  $("verseText").textContent = displayText(verse);
   $("translation").textContent = DATA.translation;
   $("today").disabled = offset === todayOffset();
   fitCaption();
@@ -639,6 +639,12 @@ function fillText() {
   // Remember the day being viewed, so reloading the page keeps your place.
   history.replaceState(null, "", `#${isoDate(offset)}`);
   if ($("drawer").classList.contains("open")) fillDrawer();
+}
+
+// A verse that continues a sentence (e.g. Proverbs 3:6 "in all your ways...") is shown
+// starting with a capital, as verse-of-the-day pages do, so the initial reads correctly.
+function displayText(verse) {
+  return verse.text.replace(/^([“"‘']?)(\p{Ll})/u, (_, quote, letter) => quote + letter.toUpperCase());
 }
 
 // Long passages: shrink the text until the caption fits in about 40% of the height.
@@ -790,8 +796,8 @@ function showStatic() {
 }
 
 async function loadFonts() {
-  for (const [family, uri] of [["Bangers", DATA.fonts.bangers], ["Comic Neue", DATA.fonts.comicNeue]]) {
-    document.fonts.add(await new FontFace(family, `url(${uri})`, { weight: family === "Comic Neue" ? "700" : "400" }).load());
+  for (const [family, uri] of [["EB Garamond", DATA.fonts.garamond], ["Cormorant Garamond", DATA.fonts.cormorant]]) {
+    document.fonts.add(await new FontFace(family, `url(${uri})`, { weight: "300 800" }).load());
   }
 }
 
@@ -1042,7 +1048,7 @@ function go(newOffset) {
 // ---------- Sharing: always the verse on screen ----------
 
 const currentVerse = () => verseFor(offset);
-const shareText = (verse = currentVerse()) => `“${verse.text}” — ${verse.ref} (${DATA.translation})`;
+const shareText = (verse = currentVerse()) => `“${displayText(verse)}” — ${verse.ref} (${DATA.translation})`;
 
 let toastTimer = 0;
 function toast(message) {
@@ -1094,71 +1100,101 @@ function wrapLines(ctx, text, maxWidth) {
   return lines;
 }
 
-// A 1080×1350 share card in the same style as the page, for the verse on screen.
+// A 1080×1350 share card in the same scripture style as the page, for the verse on screen.
 async function shareCard(verse = currentVerse(), offsetDays = offset) {
   const W = 1080, H = 1350;
+  const INK = "#2b1d11", GOLD = "#a8802f", VELLUM = "#f7efdc";
   const c = document.createElement("canvas");
   c.width = W; c.height = H;
   const ctx = c.getContext("2d");
-  ctx.fillStyle = "#efe9dc";
+  ctx.fillStyle = "#efe4cc";
   ctx.fillRect(0, 0, W, H);
+
+  // The woodcut, toned like ink on parchment, fading into the page.
   const img = artImage ?? (artImage = await loadImage(DATA.image));
   ctx.save();
-  ctx.filter = "grayscale(1) contrast(1.15)";
+  ctx.filter = "grayscale(1) sepia(0.55) contrast(1.1)";
   ctx.globalCompositeOperation = "multiply";
-  const sw = img.width * 0.86, sh = sw * (860 / W);
-  ctx.drawImage(img, img.width * 0.08, 0, sw, sh, 0, 40, W, 860);
+  const sw = img.width * 0.86, sh = sw * (820 / W);
+  ctx.drawImage(img, img.width * 0.08, 0, sw, sh, 0, 0, W, 820);
   ctx.restore();
-  const fade = ctx.createLinearGradient(0, 700, 0, 900);
-  fade.addColorStop(0, "rgba(239,233,220,0)");
-  fade.addColorStop(1, "rgba(239,233,220,1)");
+  const fade = ctx.createLinearGradient(0, 600, 0, 840);
+  fade.addColorStop(0, "rgba(239,228,204,0)");
+  fade.addColorStop(1, "rgba(239,228,204,1)");
   ctx.fillStyle = fade;
-  ctx.fillRect(0, 700, W, 200);
+  ctx.fillRect(0, 600, W, 240);
 
-  // Title word.
+  // Title word, with a soft parchment glow behind it.
+  let size = 150;
+  ctx.font = `600 ${size}px "Cormorant Garamond"`;
+  while (ctx.measureText(verse.word).width > W - 160 && size > 64) ctx.font = `600 ${(size -= 6)}px "Cormorant Garamond"`;
   ctx.save();
-  ctx.translate(60, 200);
-  ctx.rotate(-0.05);
-  let size = 170;
-  ctx.font = `${size}px Bangers`;
-  while (ctx.measureText(verse.word).width > W - 160 && size > 70) ctx.font = `${(size -= 6)}px Bangers`;
-  ctx.lineJoin = "round";
-  ctx.fillStyle = "#121110";
-  ctx.fillText(verse.word, 10, 10);
-  ctx.lineWidth = size * 0.09;
-  ctx.strokeStyle = "#121110";
-  ctx.strokeText(verse.word, 0, 0);
-  ctx.fillStyle = "#fffdf7";
-  ctx.fillText(verse.word, 0, 0);
+  ctx.shadowColor = VELLUM;
+  ctx.shadowBlur = 40;
+  ctx.fillStyle = INK;
+  for (let i = 0; i < 3; i++) ctx.fillText(verse.word, 70, 190);
   ctx.restore();
+  ctx.fillStyle = GOLD;
+  ctx.fillRect(72, 220, 340, 3);
 
-  // Caption box with the verse, shrinking the text to fit, then sizing the box to the text.
-  const box = { x: 70, y: 880, w: W - 140, h: 330 };
-  let fontSize = 48, lines;
+  // The verse in a manuscript frame, with an illuminated initial.
+  const box = { x: 80, y: 820, w: W - 160 };
+  let fontSize = 50, lines;
+  const pad = 56;
   do {
     fontSize -= 2;
-    ctx.font = `700 ${fontSize}px "Comic Neue"`;
-    lines = wrapLines(ctx, verse.text.toUpperCase(), box.w - 80);
-  } while (lines.length * fontSize * 1.3 > box.h - 70 && fontSize > 22);
-  box.h = Math.max(200, Math.round(lines.length * fontSize * 1.3 + 70));
-  ctx.fillStyle = "#121110";
-  ctx.fillRect(box.x + 12, box.y + 12, box.w, box.h);
-  ctx.fillStyle = "#fffdf7";
+    ctx.font = `${fontSize}px "EB Garamond"`;
+    lines = wrapLines(ctx, verse.text, box.w - pad * 2 - fontSize * 1.6);
+  } while (lines.length * fontSize * 1.4 > 340 && fontSize > 24);
+  const lineH = fontSize * 1.4;
+  // Wrap the text, leaving room for the initial on the first two lines.
+  const text = displayText(verse);
+  const first = text[0] === "“" ? text.slice(0, 2) : text[0];
+  const capSize = fontSize * 2.9;
+  ctx.font = `700 ${capSize}px "Cormorant Garamond"`;
+  const capW = ctx.measureText(first).width + fontSize * 0.35;
+  ctx.font = `${fontSize}px "EB Garamond"`;
+  const out = [];
+  let line = "", row = 0;
+  for (const word of text.slice(first.length).split(/\s+/)) {
+    const width = box.w - pad * 2 - (row < 2 ? capW : 0);
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > width && line) { out.push([line, row]); line = word; row++; }
+    else line = test;
+  }
+  if (line) out.push([line, row]);
+  box.h = Math.max(240, Math.round(Math.max(out.length, 2) * lineH + pad * 2 + fontSize * 1.2));
+  // Centre the frame in the space between the picture and the footer.
+  box.y = Math.round(800 + Math.max(0, (H - 110 - 800 - box.h) / 2));
+  ctx.save();
+  ctx.shadowColor = "rgba(43,29,17,0.28)";
+  ctx.shadowBlur = 40;
+  ctx.shadowOffsetY = 10;
+  ctx.fillStyle = VELLUM;
   ctx.fillRect(box.x, box.y, box.w, box.h);
-  ctx.lineWidth = 5;
-  ctx.strokeStyle = "#121110";
+  ctx.restore();
+  ctx.strokeStyle = "#5a4630";
+  ctx.lineWidth = 2;
   ctx.strokeRect(box.x, box.y, box.w, box.h);
-  ctx.fillStyle = "#121110";
-  lines.forEach((l, i) => ctx.fillText(l, box.x + 40, box.y + 70 + i * fontSize * 1.3));
-  ctx.font = "44px Bangers";
-  const refW = ctx.measureText(verse.ref).width + 40;
-  ctx.fillRect(box.x + 24, box.y - 30, refW, 58);
-  ctx.fillStyle = "#fffdf7";
-  ctx.fillText(verse.ref, box.x + 44, box.y + 14);
+  ctx.strokeStyle = GOLD;
+  ctx.strokeRect(box.x + 12, box.y + 12, box.w - 24, box.h - 24);
 
-  ctx.fillStyle = "#121110";
-  ctx.font = `700 26px "Comic Neue"`;
-  ctx.fillText(`${dateText(offsetDays)} · ${DATA.translation} · verse-ai`, 70, H - 60);
+  ctx.font = `700 ${capSize}px "Cormorant Garamond"`;
+  ctx.fillStyle = GOLD;
+  ctx.fillText(first, box.x + pad, box.y + pad + capSize * 0.72);
+  ctx.font = `${fontSize}px "EB Garamond"`;
+  ctx.fillStyle = INK;
+  out.forEach(([text, r]) => ctx.fillText(text, box.x + pad + (r < 2 ? capW : 0), box.y + pad + fontSize + r * lineH));
+  ctx.font = `${Math.round(fontSize * 0.9)}px "EB Garamond"`;
+  ctx.fillStyle = GOLD;
+  ctx.textAlign = "right";
+  const refText = `— ${verse.ref}`;
+  ctx.fillText(refText, box.x + box.w - pad, box.y + box.h - pad * 0.7);
+  ctx.textAlign = "left";
+
+  ctx.fillStyle = "#5a4630";
+  ctx.font = `italic 26px "EB Garamond"`;
+  ctx.fillText(`${dateText(offsetDays)} · ${DATA.translation} · verse-ai`, 80, H - 50);
   return c;
 }
 

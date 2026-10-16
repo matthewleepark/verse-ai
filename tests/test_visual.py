@@ -60,7 +60,7 @@ class BuildTests(unittest.TestCase):
 
     def test_artwork_and_fonts_are_embedded_for_offline_use(self):
         self.assertTrue(self.data["image"].startswith("data:image/jpeg;base64,"))
-        for name in ("bangers", "comicNeue"):
+        for name in ("garamond", "cormorant"):
             self.assertTrue(self.data["fonts"][name].startswith("data:font/ttf;base64,"))
 
     def test_verse_text_cannot_break_out_of_the_script_tag(self):

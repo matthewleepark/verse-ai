@@ -31,8 +31,8 @@ Python 3.13 in `.venv`, standard library only (no third-party packages).
 | `journal.py` | Appends Markdown reflections to `journals/YYYY-MM-DD.md` |
 | `main.py` | argparse entry point. `add_verse_options()` is shared with `visual.py`. |
 | `visual.py` | Builds `web/today.html` from `web/template.html`, embedding the whole daily list (with context and book) plus notes, books, artwork and font so the page can browse days offline |
-| `web/template.html` | Full-screen WebGL2 page. The shader draws a procedural comic sea and sky: 18 painter-ordered wave rows with ink crests, foam, halftone and hatching, spray, sun rays, clouds and rain. Time is stepped at `FPS_STEP` (10/s) for a hand-drawn feel, with a per-step "boil" wobble. The woodcut figures are cut out with the `FIGURE` polygon and overprinted (multiply) at the feathered edge. Clicks and mouse movement add splashes (`uRipples`). DOM overlays: Bangers title, Comic Neue caption box, comic buttons, and a Context drawer (C). |
-| `web/assets/` | The Schnorr von Carolsfeld 1860 woodcut (public domain), plus Bangers and Comic Neue Bold (OFL) |
+| `web/template.html` | Full-screen WebGL2 page in an engraved-Bible style. The shader draws a procedural engraved sea and sky on parchment:<br>• 16 painter-ordered wave rows shaded with `engrave()` line hatching (thicker lines = darker), cross-hatched in the troughs<br>• horizontal-line sky with clouds and gold rays from `uSun`, plus a gold glint path on the water<br>• smooth (unstepped) motion<br>• woodcut figures cut out with the `FIGURE` polygon, overprinted (multiply) at the feathered edge<br>• click and mouse ripples as fine rings (`uRipples`)<br>DOM overlays: Cormorant Garamond title, EB Garamond caption with a gold `::first-letter` initial, small-caps buttons, and a Context drawer (C). |
+| `web/assets/` | The Schnorr von Carolsfeld 1860 woodcut (public domain), plus EB Garamond and Cormorant Garamond (OFL) |
 
 ## Conventions
 
@@ -55,5 +55,7 @@ Python 3.13 in `.venv`, standard library only (no third-party packages).
   - `settleTransition()` finishes the previous transition on rapid clicks, and a 1.6 s timer forces the end state if the browser stalls.
   - The scene glides via `uTravel`, `uPulse`, `uProgress`, `uDir` and `uMood` over `TRAVEL_MS`.
   - Reduced motion gives 160 ms opacity-only fades, and CSS transitions are disabled.
+- **Style:** reverent and scriptural: parchment, sepia ink, gold accents, classic serif type. The user rejected the comic-book style, so don't reintroduce halftone dots, comic fonts or stepped animation.
+- **Capitalizing verses:** `displayText()` capitalizes a verse that starts mid-sentence (e.g. Proverbs 3:6 "in all your ways"), so the drop cap reads correctly. Use it for the caption, the copied text and the share card alike.
 - **"Today":** the real date from the viewer's clock (`localIsoToday()`), never the day the page was built or opened on. A page built for today (`startIsToday`) that is opened on a later day moves to the real today; a page built with `--date` stays on that date unless `#date` says otherwise.
 - **Gitignored:** `journals/`, `progress.json`, `.venv/`, `web/today.html`.

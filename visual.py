@@ -1,4 +1,4 @@
-"""Today's verse full screen: a woodcut of Jesus amid a comic-book sea.
+"""Today's verse full screen: a woodcut of Jesus on an engraved sea, styled like an old Bible.
 
 Builds web/today.html from web/template.html and opens it in your browser.
 Everything (all the daily verses, the artwork and the fonts) is embedded in the
@@ -68,8 +68,8 @@ def build(verse: Verse, day: date, output: Path = OUTPUT) -> Path:
         "translation": verse.translation,
         "image": _data_uri(ASSETS / "schnorr-1860.jpg", "image/jpeg"),
         "fonts": {
-            "bangers": _data_uri(ASSETS / "Bangers-Regular.ttf", "font/ttf"),
-            "comicNeue": _data_uri(ASSETS / "ComicNeue-Bold.ttf", "font/ttf"),
+            "garamond": _data_uri(ASSETS / "EBGaramond.ttf", "font/ttf"),
+            "cormorant": _data_uri(ASSETS / "CormorantGaramond.ttf", "font/ttf"),
         },
     }
     # "</" inside a <script> block could end it early, so escape it.

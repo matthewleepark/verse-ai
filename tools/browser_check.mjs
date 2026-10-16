@@ -55,12 +55,25 @@ for (let i = 0; i < 50 && !target; i++) {
 }
 if (!target) throw new Error("Edge did not start");
 
-const ws = new WebSocket(target.webSocketDebuggerUrl);
-await new Promise((r) => ws.addEventListener("open", r, { once: true }));
+let ws;
 let nextId = 0;
 const pending = new Map();
 const pageErrors = [];
-ws.addEventListener("message", (msg) => {
+// Connect to a browser tab; called again to switch to a fresh tab.
+async function attach(wsUrl) {
+  ws?.close();
+  ws = new WebSocket(wsUrl);
+  await new Promise((r) => ws.addEventListener("open", r, { once: true }));
+  ws.addEventListener("message", onMessage);
+}
+async function freshTab() {
+  const tab = await (await fetch(`http://127.0.0.1:${PORT}/json/new?about:blank`, { method: "PUT" })).json();
+  await attach(tab.webSocketDebuggerUrl);
+  await send("Page.enable");
+  await send("Runtime.enable");
+}
+await attach(target.webSocketDebuggerUrl);
+function onMessage(msg) {
   const data = JSON.parse(msg.data);
   if (data.id && pending.has(data.id)) {
     const { resolve: ok, reject } = pending.get(data.id);
@@ -73,7 +86,7 @@ ws.addEventListener("message", (msg) => {
   } else if (data.method === "Runtime.consoleAPICalled" && data.params.type === "error") {
     pageErrors.push(data.params.args.map((a) => a.value ?? a.description).join(" "));
   }
-});
+}
 const send = (method, params = {}) => new Promise((ok, reject) => {
   const id = ++nextId;
   pending.set(id, { resolve: ok, reject });
@@ -304,7 +317,8 @@ check("reduced motion: only short fades, no movement",
 check("reduced motion: still navigates and cleans up", s.offset === 1 && s.ghosts === 0);
 await send("Emulation.setEmulatedMedia", { features: [] });
 
-// ---------- 11. Phone layout and swipes ----------
+// ---------- 11. Phone layout and swipes (in a fresh tab, as a phone would load it) ----------
+await freshTab();
 await send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
 await send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
 await open();
