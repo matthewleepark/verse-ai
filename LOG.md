@@ -1,117 +1,130 @@
-# verse-ai — Development Log
+# Build Log, Artifact 2: verse-ai
 
-**Project:** verse-ai, a daily Bible verse study app (Python command-line app plus a browser poster)
-**Log written:** 2026-10-16
+Tools: Claude Code (building), Claude chat (planning). Repo: https://github.com/matthewleepark/verse-ai. Date: 2026-10-16
 
-> This log was reconstructed from the git history (`git log --reverse --stat` and `git show` on the main files at each commit). It was not written at the time of each change, and it does not use the README as a source. Anything git can't show is marked "unknown".
+This log was rebuilt from the git history (`git log --reverse --date=iso --stat` and `git show` on the main files at each commit), not from the README. "unknown" means the history doesn't show it.
 
----
+## dcaf459 · 2026-10-14 22:54:32 -0700 · "Initial commit"
 
-## Commits
+- Planned: unknown
+- Done: Created the repo with a one-line README.md.
+- Changed: README.md (1 file, +1 line)
+- Checked: unknown
+- Problems and fixes: unknown
 
-### 1. `dcaf459` — 2026-10-14 22:54:32 -0700 — "Initial commit"
+## 7632956 · 2026-10-14 22:57:10 -0700 · "Add verse-ai CLI: daily verse pairs with Claude breakdowns"
 
-- **Planned:** unknown
-- **Done:** Created the repository on GitHub with a one-line `README.md`.
-- **Changed:** `README.md` (1 file, +1 line)
-- **Checked by:** unknown
-- **Problems and fixes:** unknown
+- Planned: The commit message lists the plan:
+  - bundle the full Berean Standard Bible for offline use
+  - pair a wisdom verse with a random partner verse each day
+  - a Claude breakdown (Universal Wisdom, Historical Context, Theological Meaning, The Connection), cached so pairs already seen work offline
+  - an interactive mode for questions, summaries and journaling
+  - unit tests with a faked Claude client
+- Done:
+  - Added the command-line app: main.py, bible.py, verses.py, interactive.py and journal.py.
+  - Added the full Bible text in data/bsb.txt (31,105 lines).
+  - analysis.py called the Claude API (`MODEL = "claude-opus-5-5"`), and cache.py saved breakdowns locally.
+- Changed: 17 files, +32,170 / −1
+  - New code: .gitignore, CLAUDE.md, analysis.py, bible.py, cache.py, data/bsb.txt, interactive.py, journal.py, main.py, requirements.txt, verses.py
+  - New tests: test_analysis.py, test_bible.py, test_journal.py, test_verses.py
+- Checked: unknown. Tests were added, but whether they were run at the time is unknown.
+- Problems and fixes: unknown
 
-### 2. `7632956` — 2026-10-14 22:57:10 -0700 — "Add verse-ai CLI: daily verse pairs with Claude breakdowns"
+## 5854fdb · 2026-10-15 20:32:15 -0700 · "Offline daily verse with interactive poster"
 
-- **Planned:** unknown. The commit message lists the goals: bundle the full Berean Standard Bible for offline use, pair a curated wisdom verse with a random partner verse each day, add a Claude-written breakdown that is cached locally, an interactive mode, and unit tests with a faked Claude client.
-- **Done:**
-  - Added the first working command-line app: `main.py`, `bible.py`, `verses.py`, `interactive.py` and `journal.py`.
-  - Added the full BSB text in `data/bsb.txt`, which is 31,105 lines.
-  - `analysis.py` called the Claude API (`MODEL = "claude-opus-5-5"`, with `fallbacks="default"`), and `cache.py` stored breakdowns locally.
-- **Changed:** 17 files, +32,170 / −1. New: `.gitignore`, `CLAUDE.md`, `analysis.py`, `bible.py`, `cache.py`, `data/bsb.txt`, `interactive.py`, `journal.py`, `main.py`, `requirements.txt`, `verses.py`, and `tests/` (`test_analysis.py`, `test_bible.py`, `test_journal.py`, `test_verses.py`).
-- **Checked by:** Unit tests were added in `tests/`. Whether they were run before this commit is unknown.
-- **Problems and fixes:** unknown
+- Planned: unknown
+- Done:
+  - Removed the Claude feature (deleted analysis.py, cache.py and test_analysis.py).
+  - Switched from a verse pair to one verse per day (`get_verse()` in verses.py, with 416 daily verses in data/daily_verses.json).
+  - Added written study notes, book background and reflection questions (data/*.json).
+  - Added a streak and history (progress.py), a Proverbs reading plan (study.py), and screen layout (display.py). The commands are now read, context, journal, poster and history.
+  - Added the first browser poster (visual.py, web/template.html): Bodoni Moda font, a public-domain 1860 woodcut (web/assets/schnorr-1860.jpg), and an "About" panel.
+  - Added make_shortcut.ps1 for Desktop and Start-menu shortcuts.
+- Changed: 31 files, +2,403 / −622
+- Checked: unknown. New tests were added (test_progress.py, test_study.py, test_visual.py), but whether they were run at the time is unknown.
+- Problems and fixes: unknown
 
-### 3. `5854fdb` — 2026-10-15 20:32:15 -0700 — "Offline daily verse with interactive poster"
+## f239f20 · 2026-10-16 05:12:49 -0700 · "Cinematic verse transitions, sharing, and navigation fixes"
 
-- **Planned:** unknown
-- **Done:**
-  - Removed the Claude AI feature: deleted `analysis.py`, `cache.py` and `tests/test_analysis.py`.
-  - Replaced the daily verse pair with a single verse per day: `verses.py` now has `get_verse()`, plus a list of 416 daily verses in `data/daily_verses.json`.
-  - Added offline study content: `data/study_notes.json`, `data/books.json` and `data/reflections.json`.
-  - Added study-app features: a streak and history (`progress.py`), a Proverbs reading plan and study content (`study.py`), and screen formatting (`display.py`). The interactive commands are now `read`, `context`, `journal`, `poster` and `history`.
-  - Added the first browser poster: `visual.py` and `web/template.html`, set in the Bodoni Moda font, with a public-domain 1860 woodcut (`web/assets/schnorr-1860.jpg`) and an "About" panel.
-  - Added `make_shortcut.ps1` for Desktop and Start-menu shortcuts.
-- **Changed:** 31 files, +2,403 / −622.
-- **Checked by:** New tests `tests/test_progress.py`, `tests/test_study.py` and `tests/test_visual.py`, with updates to the others. Whether they were run before this commit is unknown.
-- **Problems and fixes:** unknown. This one commit contains several separate changes at once (removing the AI, switching to one verse a day, the study features, the poster), so the steps in between aren't visible in git.
+- Planned: unknown
+- Done:
+  - Restyled the poster with comic-book fonts (Bangers and Comic Neue replaced Bodoni Moda).
+  - Added verse transitions, a share image (`shareCard()`) and swipe/keyboard navigation in web/template.html.
+  - Added an automated browser test, tools/browser_check.mjs (364 lines).
+- Changed: 11 files, +1,504 / −379
+- Checked: unknown. The browser test was added, but whether it was run at the time is unknown.
+- Problems and fixes: The message says "navigation fixes". What was fixed is unknown.
 
-### 4. `f239f20` — 2026-10-16 05:12:49 -0700 — "Cinematic verse transitions, sharing, and navigation fixes"
+## deb2661 · 2026-10-16 07:21:04 -0700 · "Engraved scripture style for the poster"
 
-- **Planned:** unknown
-- **Done:**
-  - Restyled the poster with comic-book fonts: replaced Bodoni Moda with Bangers and Comic Neue.
-  - Reworked `web/template.html` (+1,347 lines changed): verse-to-verse transitions, a share feature (`shareCard()`), and swipe and keyboard navigation.
-  - Added an automated browser test, `tools/browser_check.mjs` (364 lines).
-- **Changed:** 11 files, +1,504 / −379. Added `tools/browser_check.mjs`, `web/assets/Bangers-Regular.ttf`, `web/assets/ComicNeue-Bold.ttf` and their license files; removed the Bodoni Moda font.
-- **Checked by:** `tools/browser_check.mjs` was added in this commit, and `tests/test_visual.py` was updated. Whether either was run before this commit is unknown.
-- **Problems and fixes:** The message mentions "navigation fixes". Which problems were fixed is unknown from git alone.
+- Planned: unknown
+- Done: Replaced the comic style with a light parchment, engraved-Bible style, using the EB Garamond and Cormorant Garamond fonts.
+- Changed: 12 files, +386 / −334 (web/template.html, visual.py, tools/browser_check.mjs, tests/test_visual.py, README.md, CLAUDE.md, fonts)
+- Checked: unknown
+- Problems and fixes: unknown
 
-### 5. `deb2661` — 2026-10-16 07:21:04 -0700 — "Engraved scripture style for the poster"
+## 035285e · 2026-10-16 08:59:58 -0700 · "Dark cinematic design for the poster"
 
-- **Planned:** unknown
-- **Done:** Replaced the comic style with a light parchment, engraved-Bible style: the template defines `--parchment` and `--vellum` colours, and the comic fonts were swapped for EB Garamond and Cormorant Garamond.
-- **Changed:** 12 files, +386 / −334. `web/template.html`, `visual.py`, `tools/browser_check.mjs`, `tests/test_visual.py`, `README.md`, `CLAUDE.md`, and the font files.
-- **Checked by:** `tools/browser_check.mjs` and `tests/test_visual.py` were updated. Whether they were run before this commit is unknown.
-- **Problems and fixes:** unknown
+- Planned: unknown
+- Done: Changed the poster to a dark design. The template describes it as "The Fourth Watch": an engraving printed in darkness, lit by one light.
+- Changed: 3 files, +485 / −280 (web/template.html, README.md, CLAUDE.md)
+- Checked: unknown
+- Problems and fixes: unknown
 
-### 6. `035285e` — 2026-10-16 08:59:58 -0700 — "Dark cinematic design for the poster"
+## 1cbc018 · 2026-10-16 21:52:28 -0700 · "Dark cinematic design: fixes from review"
 
-- **Planned:** unknown
-- **Done:** Changed the poster to a dark design, described in the template as `"The Fourth Watch": an engraving printed in darkness, lit by one light`, with a `--night: #0b0a0b` background.
-- **Changed:** 3 files, +485 / −280: `web/template.html`, `README.md` and `CLAUDE.md`.
-- **Checked by:** unknown
-- **Problems and fixes:** unknown
+- Planned: The message says the changes came from a review. What the review found is described only by the code comments listed below.
+- Done: The new code comments describe these fixes:
+  - shadow behind the title and buttons so they stay readable
+  - room for letter tails in the gold title (like the J)
+  - the verse stops before the figure
+  - a gold first letter with a hanging quotation mark
+  - a minimum size for the reference
+  - a solid band at the top of the Context panel so scrolled text doesn't run behind the buttons
+  - balanced quotation marks
+  - short verses grow and long ones shrink
+  - reduced-motion handling
+  - smoother fast double clicks
+- Changed: 2 files, +257 / −58 (web/template.html, CLAUDE.md)
+- Checked (Claude Code ran these on 2026-10-16 with this commit checked out):
+  - `python -m unittest discover tests` → "Ran 50 tests in 0.718s, OK"
+  - `python main.py --date 2026-10-14` → showed the study for Wednesday, October 14, 2026 (1 Peter 4:8, "LOVE"), then exited on `quit`
+  - `python visual.py --no-open` → built web/today.html, exit code 0
+  - `node tools/browser_check.mjs` → "35/35 checks passed"
+- Problems and fixes: unknown, beyond the fixes listed above
 
-### 7. `1cbc018` — 2026-10-16 21:52:28 -0700 — "Dark cinematic design: fixes from review"
+## 9f6388a · 2026-10-16 22:27:51 -0700 · "Add LOG.md for Artifact 2"
 
-- **Planned:** unknown. The message says the changes came from a review.
-- **Done:** The code comments added in this commit describe these fixes:
-  - Shadow pools behind the title and controls so they stay readable.
-  - Room for letter tails in the gold title, such as the tail of J.
-  - The verse stops short of the figure.
-  - A real gold initial plus a hanging quotation mark.
-  - A minimum size for the reference.
-  - A solid band at the top of the Context drawer so scrolled text doesn't run behind the buttons.
-  - Balancing quotation marks on verses that start or end mid-quote.
-  - Short verses grow and long ones shrink.
-  - Title fitting that measures the letters.
-  - Reduced-motion handling.
-  - Smoother handling of fast second clicks during a transition.
-- **Changed:** 2 files, +257 / −58: `web/template.html` and `CLAUDE.md`.
-- **Checked by:** unknown from git
-- **Problems and fixes:** The problems are the ones the code comments name above. Who found them, and how, is unknown from git.
+- Planned: unknown
+- Done: Added the first version of this log, rebuilt from git history.
+- Changed: LOG.md (1 file, +117 lines)
+- Checked: `git log --oneline` showed the commit at the top.
+- Problems and fixes: Its layout didn't match my portfolio log, so the log was rewritten in this format.
 
----
+## 0d4a7ff · 2026-10-16 22:34:52 -0700 · "Ignore .env files"
 
-## Process
+- Planned: unknown
+- Done: Added `.env` back to .gitignore.
+- Changed: .gitignore (1 line)
+- Checked: Created an empty .env file, ran `git check-ignore .env`, which printed `.env` (so it's ignored), then deleted the test file.
+- Problems and fixes: Fixes the gap described under Issues.
 
-- **Claude chat** handled planning.
-- **Claude Code** handled building.
-
-## Manual changes by me
-
-<!-- Fill this in yourself: anything you wrote, edited, or decided by hand. -->
+## Changes I made by hand
 
 ## Decisions
 
-These are questions for me (the student) to answer. They weren't guessed from the code.
+Questions for me to answer:
 
-1. Why did the app move from Claude-generated breakdowns (commit 2) to a fully offline app with written study notes (commit 3)?
-   - Answer:
-2. Why did the daily verse change from a pair of verses (commit 2) to a single verse each day (commit 3)?
-   - Answer:
-3. Why use the Berean Standard Bible (BSB) as the translation?
-   - Answer:
-4. Why add a browser poster alongside the command-line app?
-   - Answer:
-5. Why did the poster go comic → parchment → dark (commits 4, 5 and 6)? What did you dislike about each earlier style?
-   - Answer:
-6. What did you decide to leave out or postpone, such as the phone-layout fixes?
-   - Answer:
+1. Why did you remove the Claude breakdowns (7632956) and make the app fully offline (5854fdb)?
+2. Why did you go from a pair of verses each day to one verse?
+3. Why the Berean Standard Bible?
+4. Why add a browser poster next to the command-line app?
+5. Why did the poster go comic → parchment → dark (f239f20, deb2661, 035285e)?
+6. What did you leave out on purpose?
+
+## Issues
+
+- `.env` was in .gitignore at 7632956, dropped in 5854fdb, and added back in 0d4a7ff. No .env file was ever committed (checked with `git log --all --name-only`).
+- Some commits bundle several steps, so the steps in between aren't in the history. For example, 5854fdb removes the AI feature, switches to one verse a day, adds the study features and adds the poster, all in one commit.
+- The commit messages don't say how changes were tested. The "Checked" lines are mostly "unknown" for that reason.
+- There's an old local branch called `master` with only the initial commit. It isn't on GitHub.
