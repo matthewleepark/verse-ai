@@ -52,7 +52,9 @@ Python 3.13 in `.venv`, standard library only (no third-party packages).
   - `offset` changes synchronously, so Context, Share and the `#date` hash always match the displayed verse. Only the visuals animate.
   - The outgoing `.heading` and `.caption` are cloned into `.ghost` layers (`pointer-events: none`). New title letters are revealed in the direction of travel. Forward: the ghost scales up and the letters come from 0.8. Backward: the ghost scales down and the letters come from 1.2.
   - The caption swap is sequential, so two passages never overlap.
-  - `settleTransition()` finishes the previous transition on rapid clicks, and a 1.6 s timer forces the end state if the browser stalls.
+  - On a second click within 500 ms, `reuseGhosts()` keeps the outgoing copies the reader is still looking at (it commits their mid-fade styles) rather than flashing the half-revealed in-between verse; otherwise `settleTransition()` finishes the previous transition.
+  - A `SAFETY_MS` (1.9 s) timer forces the end state if the browser stalls. `freezeAt()` pauses that timer.
+  - The title ghost is gone by 420 ms and the new letters start at 360 ms, so two words never blend into one.
   - The scene glides via `uTravel`, `uPulse`, `uProgress`, `uDir` and `uMood` over `TRAVEL_MS`.
   - Reduced motion gives 160 ms opacity-only fades, and CSS transitions are disabled.
 - **Style:** reverent and scriptural: an engraving printed in darkness, lit by one light. Charcoal, bone, warm gold, crimson only as hairline rules, classic serif type. The user's dark-theme request supersedes the earlier parchment look. Never comic styles, halftone dots or stepped animation. Avoid boxes around the verse, glassmorphism, pure #000/#fff, faux italics (both fonts are roman-only), and particles.

@@ -15,8 +15,8 @@
     --bone-soft: #d9cfbd;
     --bone-dim: #cbbd9f;
     --ash: #b9a98c;
-    --muted: #857a68;
-    --disabled: #766b5b;
+    --muted: #a09382;
+    --disabled: #8f8370;
     --gold: #d4a24c;
     --gold-hi: #f1d79a;
     --gold-lo: #9c7433;
@@ -33,7 +33,14 @@
 
   canvas, .fallback-img { position: fixed; inset: 0; width: 100vw; height: 100vh; }
   canvas { cursor: crosshair; touch-action: none; }
-  .fallback-img { object-fit: contain; object-position: 63% 100%; filter: grayscale(1) sepia(0.6) brightness(0.55) contrast(1.15); display: none; }
+  .fallback-img {
+    object-fit: contain;
+    object-position: 63% 100%;
+    filter: grayscale(1) sepia(0.6) brightness(0.36) contrast(1.2);
+    -webkit-mask-image: radial-gradient(60% 75% at 63% 62%, #000 45%, transparent 90%);
+    mask-image: radial-gradient(60% 75% at 63% 62%, #000 45%, transparent 90%);
+    display: none;
+  }
   .static .fallback-img { display: block; }
   body.static::after {
     content: "";
@@ -50,7 +57,18 @@
     left: var(--gx);
     pointer-events: none;
     z-index: 2;
+    isolation: isolate;
   }
+  /* Invisible pools of shadow behind the title and the controls, so they read even in the rays. */
+  .heading::before, .controls::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(closest-side, rgb(7 6 7 / 0.7), rgb(7 6 7 / 0.42) 60%, transparent);
+  }
+  .heading::before { inset: -40% -14% -40% -10%; }
+  .controls::before { inset: -26px -44px; }
   .date {
     display: inline-flex;
     align-items: center;
@@ -86,6 +104,9 @@
   /* Gold leaf, per letter (on the parent it garbles the letter-by-letter reveal). */
   .title .ch {
     display: inline-block;
+    /* Extra painted room so overhangs and descenders (the tail of J, Q, R) get gilded too. */
+    padding: 0.06em 0.16em 0.24em;
+    margin: -0.06em -0.16em -0.24em;
     background: linear-gradient(180deg, #f1d79a 0%, #d4a24c 58%, #9c7433 100%);
     -webkit-background-clip: text;
     background-clip: text;
@@ -111,6 +132,7 @@
     display: flex;
     gap: 2px;
     z-index: 6;               /* stays clickable above the Context drawer */
+    isolation: isolate;
   }
   .controls button {
     font-family: "EB Garamond", Garamond, Georgia, serif;
@@ -204,7 +226,9 @@
     position: fixed;
     left: var(--gx);
     bottom: clamp(36px, 10vh, 120px);
-    width: min(38vw, 44rem);
+    /* Stop short of Jesus' robe: the figure is centred at 63vw and is about 1.008 × 84vh wide,
+       so its robe starts near 63vw - 38.3vh. */
+    width: max(28vw, min(38vw, 44rem, calc(63vw - 38.3vh - var(--gx) - 28px)));
     isolation: isolate;
     z-index: 2;
   }
@@ -228,11 +252,11 @@
     color: var(--bone);
     font-feature-settings: "kern", "liga", "onum";
     text-wrap: pretty;
-    hanging-punctuation: first;
     text-shadow: 0 1px 2px rgb(0 0 0 / 0.7), 0 0 28px rgb(0 0 0 / 0.55);
   }
-  /* A gold initial, as if lit by the light behind Jesus. */
-  .caption .text::first-letter {
+  /* A gold initial, as if lit by the light behind Jesus. It's a real span (not ::first-letter,
+     which would swallow an opening quotation mark into the initial). */
+  .caption .text .initial {
     float: left;
     font-family: "Cormorant Garamond", "EB Garamond", Georgia, serif;
     font-weight: 500;
@@ -242,13 +266,22 @@
     color: var(--gold);
     text-shadow: 0 0 22px rgb(212 162 76 / 0.35);
   }
+  /* An opening quotation mark hangs in the margin, so the initial keeps its usual indent. */
+  .caption .text { position: relative; }
+  .caption .text .q {
+    position: absolute;
+    left: -0.5em;
+    top: 0;
+    color: var(--gold-lo);
+  }
   .caption .ref {
     display: flex;
     align-items: center;
     gap: 0.9em;
     clear: both;
     margin-top: 1.1em;
-    font-size: calc(clamp(14px, 1vw, 18px) * var(--ts));
+    /* The reference never grows with a short verse, and never shrinks below legible. */
+    font-size: max(12px, calc(clamp(14px, 1vw, 18px) * min(var(--ts), 1)));
     font-variant-caps: all-small-caps;
     font-feature-settings: "onum";
     letter-spacing: 0.26em;
@@ -272,7 +305,7 @@
     transition: opacity 1.2s ease;
   }
   .hint.gone, .drawer.open ~ .hint { opacity: 0; }
-  .credit { bottom: clamp(10px, 1.6vh, 20px); font-size: 12px; letter-spacing: 0.06em; }
+  .credit { bottom: clamp(10px, 1.6vh, 20px); font-size: 13px; letter-spacing: 0.06em; }
 
   /* ---------- Context drawer ---------- */
   .drawer {
@@ -287,7 +320,7 @@
     box-shadow: -24px 0 60px rgb(0 0 0 / 0.55);
     scrollbar-color: rgb(212 162 76 / 0.35) transparent;
     /* The top is left free so the day and Share buttons stay usable while it's open. */
-    padding: calc(var(--gy) + 74px) 36px 44px;
+    padding: 0 36px 44px;
     font-size: 18px;
     line-height: 1.65;
     color: var(--bone-soft);
@@ -296,6 +329,19 @@
     z-index: 5;
   }
   .drawer.open { transform: none; }
+  /* A solid band at the top of the drawer that stays put while it scrolls, so the text
+     slides away under it instead of running behind the day and Share buttons above. */
+  .drawer::before {
+    content: "";
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: block;
+    height: calc(var(--gy) + 74px);
+    margin: 0 -36px;
+    background: linear-gradient(rgb(14 12 13), rgb(14 12 13) 78%, rgb(14 12 13 / 0));
+    pointer-events: none;
+  }
   .drawer .label { font-variant-caps: all-small-caps; letter-spacing: 0.22em; color: var(--gold); font-size: 17px; }
   .drawer h2 {
     font-family: "Cormorant Garamond", "EB Garamond", Georgia, serif;
@@ -321,7 +367,7 @@
   .drawer .here { color: #f4ead3; background: var(--crimson-wash); box-shadow: 0 0 0 2px rgb(138 42 34 / 0.26); }
   .drawer .close {
     position: absolute;
-    top: calc(var(--gy) + 70px);
+    top: calc(var(--gy) + 80px);
     right: 24px;
     width: 46px;
     height: 46px;
@@ -367,7 +413,9 @@
     .caption::before { inset: -18% -10% -14% -10%; }
     .caption .text { font-size: calc(clamp(19px, 5.2vw, 24px) * var(--ts)); line-height: 1.45; }
     .hint { display: none; }
-    .credit { right: 0; left: 0; bottom: 6px; text-align: center; font-size: 11px; }
+    .credit { right: 0; left: 0; bottom: 6px; text-align: center; font-size: 12px; }
+    .controls::before { display: none; }          /* the top gradient already covers them */
+    .date { color: var(--bone-dim); text-shadow: 0 0 12px #000, 0 0 3px #000; }
   }
 
   /* People who prefer less motion get instant UI changes (verse changes become short fades). */
@@ -727,7 +775,22 @@ function fillText() {
   }));
   $("title").setAttribute("aria-label", verse.word);
   $("verseRef").textContent = verse.ref;
-  $("verseText").textContent = displayText(verse);
+  // The verse: an optional hanging quotation mark, a gold initial, then the rest. The text
+  // content stays the plain verse, so copying, the ghost copies and screen readers read it whole.
+  const text = displayText(verse);
+  const quote = /^[“‘]/.test(text) ? text[0] : "";
+  const parts = [];
+  if (quote) {
+    const q = document.createElement("span");
+    q.className = "q";
+    q.textContent = quote;
+    parts.push(q);
+  }
+  const initial = document.createElement("span");
+  initial.className = "initial";
+  initial.textContent = text[quote.length];
+  parts.push(initial, text.slice(quote.length + 1));
+  $("verseText").replaceChildren(...parts);
   $("translation").textContent = DATA.translation;
   $("today").disabled = offset === todayOffset();
   fitCaption();
@@ -745,17 +808,26 @@ function fillText() {
 
 // A verse that continues a sentence (e.g. Proverbs 3:6 "in all your ways...") is shown
 // starting with a capital, as verse-of-the-day pages do, so the initial reads correctly.
+// A quotation that started or ends in a neighbouring verse is closed or opened here, so a
+// verse shown on its own (e.g. Joshua 24:15) never has a stray quotation mark.
 function displayText(verse) {
-  return verse.text.replace(/^([“"‘']?)(\p{Ll})/u, (_, quote, letter) => quote + letter.toUpperCase());
+  let text = verse.text;
+  const opens = (text.match(/“/g) || []).length;
+  const closes = (text.match(/”/g) || []).length;
+  if (closes > opens) text = "“" + text;
+  else if (opens > closes) text = text + "”";
+  return text.replace(/^([“"‘']?)(\p{Ll})/u, (_, quote, letter) => quote + letter.toUpperCase());
 }
 
 const isPortrait = () => window.innerWidth < window.innerHeight || window.innerWidth <= 700;
 
-// Long passages: shrink the text until the caption fits (40% of the height, 30% on phones).
+// Size the verse to its space (40% of the height, 30% on phones): short verses grow so they
+// stay the centrepiece (up to 1.4×, 1.2× on phones), long passages shrink (down to 0.6×).
 function fitCaption() {
   const caption = $("caption");
-  const limit = window.innerHeight * (isPortrait() ? 0.3 : 0.4);
-  let scale = 1;
+  const portrait = isPortrait();
+  const limit = window.innerHeight * (portrait ? 0.3 : 0.4);
+  let scale = portrait ? 1.2 : 1.4;
   caption.style.setProperty("--ts", scale);
   while (caption.offsetHeight > limit && scale > 0.6) {
     scale -= 0.05;
@@ -764,12 +836,15 @@ function fitCaption() {
 }
 
 // Long title words (up to "NOTHING TOO HARD"): shrink until the word fits its column.
+// It measures the letters themselves, not the block (whose negative margin always overflows).
 function fitTitle() {
   const title = $("title");
-  const maxW = isPortrait() ? window.innerWidth - 40 : window.innerWidth * 0.46;
+  const maxW = isPortrait() ? window.innerWidth - 40 : window.innerWidth * 0.4;
+  const letters = document.createRange();
+  letters.selectNodeContents(title);
   let tw = 1;
   title.style.setProperty("--tw", tw);
-  while (title.scrollWidth > maxW && tw > 0.45) {
+  while (letters.getBoundingClientRect().width > maxW && tw > 0.45) {
     tw -= 0.05;
     title.style.setProperty("--tw", tw);
   }
@@ -958,7 +1033,14 @@ async function start() {
 
   // A clock that stops while paused, so the waves and splashes freeze together.
   const fixedTime = PARAMS.has("t") ? Number(PARAMS.get("t")) : null;
-  const still = fixedTime !== null || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+  let still = fixedTime !== null || motionQuery.matches;
+  const fullHint = $("hint").textContent;
+  const updateHint = () => {
+    // With motion off the water doesn't ripple and there's nothing to pause.
+    $("hint").textContent = motionQuery.matches ? "Arrow keys change the day · C for context" : fullHint;
+  };
+  updateHint();
   let paused = false;
   let clock = fixedTime ?? 0;
   let last = performance.now();
@@ -1063,14 +1145,33 @@ async function start() {
     }
   });
 
-  if (!still) {
+  let rafId = 0;
+  const startLoop = () => {
+    last = performance.now();
     const frame = (now) => {
       if (!paused) clock += Math.min(now - last, 100) / 1000;
       last = now;
       draw(now);
-      requestAnimationFrame(frame);
+      rafId = requestAnimationFrame(frame);
     };
-    requestAnimationFrame(frame);
+    rafId = requestAnimationFrame(frame);
+  };
+  if (!still) startLoop();
+  // Turning "reduce motion" on or off while the page is open takes effect straight away.
+  if (fixedTime === null) {
+    motionQuery.addEventListener("change", () => {
+      updateHint();
+      if (motionQuery.matches) {
+        still = true;
+        cancelAnimationFrame(rafId);
+        travelState.start = -Infinity;       // any camera move in progress snaps to its end
+        draw();
+      } else {
+        still = false;
+        paused = false;
+        startLoop();
+      }
+    });
   }
 }
 
@@ -1082,13 +1183,30 @@ async function start() {
 
 const reducedMotion = () =>
   window.matchMedia("(prefers-reduced-motion: reduce)").matches || PARAMS.has("t");
-let transition = { animations: [], ghosts: [], timer: 0 };
+let transition = { animations: [], ghosts: [], timer: 0, startedAt: -Infinity };
+const SAFETY_MS = 1900;
 
 function settleTransition() {
   clearTimeout(transition.timer);
   for (const a of transition.animations) a.finish();
   for (const g of transition.ghosts) g.remove();
-  transition = { animations: [], ghosts: [], timer: 0 };
+  transition = { animations: [], ghosts: [], timer: 0, startedAt: -Infinity };
+}
+
+// A second click early in a transition: keep the words the reader is still looking at (the
+// outgoing copies) and carry on fading them from where they are, instead of flashing up the
+// half-revealed in-between verse. Returns the reused copies, or null.
+function reuseGhosts() {
+  const t = transition;
+  if (t.ghosts.length !== 2 || performance.now() - t.startedAt > 500 || reducedMotion()) return null;
+  clearTimeout(t.timer);
+  for (const g of t.ghosts) {
+    for (const a of g.getAnimations({ subtree: true })) { a.commitStyles(); a.cancel(); }
+  }
+  for (const a of t.animations) if (a.playState !== "idle") a.finish();
+  const ghosts = t.ghosts;
+  transition = { animations: [], ghosts: [], timer: 0, startedAt: -Infinity };
+  return ghosts;
 }
 
 function ghostOf(el) {
@@ -1104,10 +1222,25 @@ function ghostOf(el) {
 function go(newOffset) {
   if (newOffset === offset) return;
   const dir = Math.sign(newOffset - offset);
-  settleTransition();                          // rapid clicks: finish the last one instantly
-  const heading = document.querySelector(".heading");
+  const heading = document.querySelector(".heading:not(.ghost)");
   const caption = $("caption");
-  const ghosts = [ghostOf(heading), ghostOf(caption)];
+  let ghosts = reuseGhosts();
+  if (!ghosts) {
+    // If the previous verse is still being revealed, copy it as it looks right now
+    // (partly revealed), not fully shown, so a later second click never flashes it.
+    const live = [heading, caption];
+    const touched = [];
+    for (const a of transition.animations) {
+      const el = a.effect && a.effect.target;
+      if (el && live.some((root) => root.contains(el)) && a.playState !== "finished") {
+        a.commitStyles();
+        touched.push(el);
+      }
+    }
+    ghosts = live.map(ghostOf);
+    settleTransition();                        // finish any earlier transition instantly
+    for (const el of touched) for (const prop of ["opacity", "transform", "filter", "clip-path"]) el.style.removeProperty(prop);
+  }
   offset = newOffset;
   fillText();
   scene.travel(dir);
@@ -1125,10 +1258,14 @@ function go(newOffset) {
     const ease = "cubic-bezier(0.22, 0.61, 0.36, 1)";
     // Forward: the old title passes by the viewer as the new one rises out of the depth.
     // Backward: the old title recedes into the depth as the previous one comes back forward.
+    // The old title is gone (420 ms) before the new letters gain weight (from 360 ms), so the
+    // two words never blend into one. Keyframes start from the copy's current look, which is
+    // the resting state normally, or mid-fade when a reused copy carries on after a quick second click.
     play(ghosts[0], [
-      { opacity: 1, transform: "none", filter: "blur(0)" },
       { opacity: 0, transform: `translate3d(${-dir * 2}vw, -0.5vh, 0) scale(${dir > 0 ? 1.12 : 0.88})`, filter: "blur(7px)" },
-    ], { duration: 600, easing: "cubic-bezier(0.4, 0, 0.6, 1)", fill: "forwards" });
+    ], { duration: 420, easing: "cubic-bezier(0.4, 0, 0.6, 1)", fill: "forwards" });
+    const ghostDate = ghosts[0].querySelector(".date");
+    if (ghostDate) play(ghostDate, [{ opacity: 0 }], { duration: 150, easing: "ease-in", fill: "forwards" });
     const letters = [...$("title").children];
     const stagger = Math.min(44, 520 / Math.max(letters.length, 1));
     letters.forEach((letter, i) => {
@@ -1136,16 +1273,16 @@ function go(newOffset) {
       play(letter, [
         { opacity: 0, transform: `translateY(0.16em) scale(${dir > 0 ? 0.8 : 1.2})`, filter: "blur(9px)" },
         { opacity: 1, transform: "none", filter: "blur(0)" },
-      ], { duration: 760, delay: 260 + order * stagger, easing: ease });
+      ], { duration: 760, delay: 360 + order * stagger, easing: ease });
     });
-    play($("date"), [{ opacity: 0 }, { opacity: 1 }], { duration: 500, delay: 200 });
-    // A rack focus: the old verse is gone before the new one resolves, so two passages never overlap.
+    play($("date"), [{ opacity: 0 }, { opacity: 1 }], { duration: 500, delay: 220 });
+    // A rack focus that drifts with the camera: the old verse is gone before the new one
+    // resolves, so two passages never overlap.
     play(ghosts[1], [
-      { opacity: 1, transform: "none", filter: "blur(0)" },
-      { opacity: 0, transform: "translateY(-6px)", filter: "blur(3px)" },
+      { opacity: 0, transform: `translate3d(${-dir * 12}px, -6px, 0)`, filter: "blur(3px)" },
     ], { duration: 240, easing: "ease-in", fill: "forwards" });
     play(caption, [
-      { opacity: 0, transform: "translateY(10px)", filter: "blur(4px)" },
+      { opacity: 0, transform: `translate3d(${dir * 16}px, 10px, 0)`, filter: "blur(4px)" },
       { opacity: 1, transform: "none", filter: "blur(0)" },
     ], { duration: 680, delay: 300, easing: "cubic-bezier(0.16, 1, 0.3, 1)" });
     play($("verseRef"), [
@@ -1159,14 +1296,18 @@ function go(newOffset) {
   for (const g of ghosts) g.getAnimations().forEach((a) => a.finished.then(() => g.remove(), () => {}));
   // Safety net: if the browser stalls (a busy or backgrounded tab), still end on the
   // finished state, so the new title never stays invisible.
-  const timer = setTimeout(settleTransition, 1900);
-  transition = { animations: anims, ghosts, timer };
+  const timer = setTimeout(settleTransition, SAFETY_MS);
+  transition = { animations: anims, ghosts, timer, startedAt: performance.now() };
 }
 
 // ---------- Sharing: always the verse on screen ----------
 
 const currentVerse = () => verseFor(offset);
-const shareText = (verse = currentVerse()) => `“${displayText(verse)}” — ${verse.ref} (${DATA.translation})`;
+const shareText = (verse = currentVerse()) => {
+  const text = displayText(verse);
+  const quoted = /^[“‘]/.test(text) ? text : `“${text}”`;   // don't double up quotation marks
+  return `${quoted} — ${verse.ref} (${DATA.translation})`;
+};
 
 let toastTimer = 0;
 function toast(message) {
@@ -1264,12 +1405,13 @@ async function shareCard(verse = currentVerse(), offsetDays = offset) {
   p.filter = "none";
   const head = { x: ((JESUS_HEAD[0] * img.width - sx) / sw) * W, y: ((JESUS_HEAD[1] * img.height) / sh) * PIC_H };
   p.globalCompositeOperation = "multiply";
-  const lamp = p.createRadialGradient(head.x, head.y + 60, 0, head.x, head.y + 60, 1000);
+  // A tight lamp: Jesus and Peter lit, the woodcut's own daytime sky falling into night.
+  const lamp = p.createRadialGradient(head.x, head.y + 60, 0, head.x, head.y + 60, 620);
   lamp.addColorStop(0, "#fbf1d8");
   lamp.addColorStop(0.2, "#e9c98a");
-  lamp.addColorStop(0.5, "#8f6c3c");
-  lamp.addColorStop(0.85, "#34281b");
-  lamp.addColorStop(1, "#141110");
+  lamp.addColorStop(0.45, "#6b5030");
+  lamp.addColorStop(0.7, "#1c1612");
+  lamp.addColorStop(1, NIGHT);
   p.fillStyle = lamp;
   p.fillRect(0, 0, W, PIC_H);
   p.globalCompositeOperation = "screen";
@@ -1284,6 +1426,11 @@ async function shareCard(verse = currentVerse(), offsetDays = offset) {
   streak.addColorStop(1, "rgba(219,143,61,0)");
   p.fillStyle = streak;
   p.fillRect(0, head.y - 3, W, 6);
+  // The picture stays inside the hairline frame.
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(37, 37, W - 74, H - 74);
+  ctx.clip();
   ctx.drawImage(pic, 0, 0);
 
   // 2. Fade the picture into the night, and a vignette.
@@ -1292,6 +1439,7 @@ async function shareCard(verse = currentVerse(), offsetDays = offset) {
   fade.addColorStop(1, NIGHT);
   ctx.fillStyle = fade;
   ctx.fillRect(0, 520, W, PIC_H - 520 + 1);
+  ctx.restore();
   const vig = ctx.createRadialGradient(W * 0.45, H * 0.4, 0, W * 0.45, H * 0.4, Math.hypot(W, H) * 0.62);
   vig.addColorStop(0.55, "rgba(0,0,0,0)");
   vig.addColorStop(1, "rgba(0,0,0,0.6)");
@@ -1302,9 +1450,14 @@ async function shareCard(verse = currentVerse(), offsetDays = offset) {
   ctx.textBaseline = "alphabetic";
   const footerY = H - 72;
   ctx.font = `500 19px "EB Garamond"`;
+  // Shorten the translation name if a long date would crowd "VERSE-AI".
+  let footer = `${dateText(offsetDays)} · ${DATA.translation}`.toUpperCase();
+  if (M + trackedWidth(ctx, footer, 4) > W - M - trackedWidth(ctx, "VERSE-AI", 4) - 64) {
+    footer = `${dateText(offsetDays)} · BSB`.toUpperCase();
+  }
   ctx.fillStyle = "#b9a98c";
-  trackedText(ctx, `${dateText(offsetDays)} · ${DATA.translation}`.toUpperCase(), M, footerY, 4);
-  ctx.fillStyle = "#857a68";
+  trackedText(ctx, footer, M, footerY, 4);
+  ctx.fillStyle = "#a09382";
   trackedText(ctx, "VERSE-AI", W - M, footerY, 4, "right");
 
   const refY = footerY - 92;
@@ -1314,28 +1467,42 @@ async function shareCard(verse = currentVerse(), offsetDays = offset) {
   ctx.fillStyle = GOLD;
   trackedText(ctx, verse.ref.toUpperCase(), M + 56 + 22, refY, 7);
 
-  // The verse, fitted to the space, with a two-line gold initial.
+  // The verse, fitted to the space, with a gold initial. An opening quotation mark hangs in
+  // the margin so it doesn't widen the initial's indent.
   const text = displayText(verse);
-  const first = text[0] === "“" ? text.slice(0, 2) : text[0];
-  const layout = (size) => {
-    ctx.font = `500 ${size * 2.75}px "Cormorant Garamond"`;
+  const quote = text[0] === "“" ? "“" : "";
+  const first = text[quote.length];
+  const rest = text.slice(quote.length + 1);
+  const layout = (size, lines) => {
+    // Size the initial from the fonts' real cap heights so it spans exactly `lines` lines.
+    ctx.font = `400 ${size}px "EB Garamond"`;
+    const boneCap = ctx.measureText("H").actualBoundingBoxAscent;
+    ctx.font = `500 100px "Cormorant Garamond"`;
+    const cap100 = ctx.measureText(first).actualBoundingBoxAscent || 63;
+    const capPx = (100 * ((lines - 1) * size * 1.4 + boneCap)) / cap100;
+    ctx.font = `500 ${capPx}px "Cormorant Garamond"`;
     const capW = ctx.measureText(first).width + size * 0.3;
     ctx.font = `400 ${size}px "EB Garamond"`;
     const rows = [];
     let line = "";
-    for (const word of text.slice(first.length).split(/\s+/)) {
-      const width = W - 2 * M - (rows.length < 2 ? capW : 0);
+    for (const word of rest.split(/\s+/)) {
+      const width = W - 2 * M - (rows.length < lines ? capW : 0);
       const test = line ? `${line} ${word}` : word;
       if (ctx.measureText(test).width > width && line) { rows.push(line); line = word; }
       else line = test;
     }
     if (line) rows.push(line);
-    return { size, capW, rows, height: Math.max(rows.length, 2) * size * 1.4 };
+    return { size, lines, capPx, capW, rows, height: Math.max(rows.length, lines) * size * 1.4 };
   };
-  let fit = layout(50);
+  let fit = layout(50, 2);
   for (let size = 50; size >= 28; size -= 2) {
-    fit = layout(size);
+    fit = layout(size, 2);
     if (fit.height <= 330 || (size <= 32 && fit.height <= 420)) break;
+  }
+  if (fit.rows.length === 1) {
+    // A one-line verse: the first letter is simply gold, in line with the rest of the text.
+    ctx.font = `400 ${fit.size}px "EB Garamond"`;
+    fit = { ...fit, lines: 1, inline: true, capW: ctx.measureText(first).width, height: fit.size * 1.4 };
   }
   const lineH = fit.size * 1.4;
   const verseBottom = refY - 64;
@@ -1345,14 +1512,23 @@ async function shareCard(verse = currentVerse(), offsetDays = offset) {
   ctx.shadowBlur = 18;
   ctx.font = `400 ${fit.size}px "EB Garamond"`;
   ctx.fillStyle = BONE;
-  fit.rows.forEach((row, i) => ctx.fillText(row, M + (i < 2 ? fit.capW : 0), verseTop + fit.size + i * lineH));
+  fit.rows.forEach((row, i) => ctx.fillText(row, M + (i < fit.lines ? fit.capW : 0), verseTop + fit.size + i * lineH));
   ctx.restore();
   ctx.save();
   ctx.shadowColor = "rgba(212,162,76,0.4)";
   ctx.shadowBlur = 28;
-  ctx.font = `500 ${fit.size * 2.75}px "Cormorant Garamond"`;
   ctx.fillStyle = "#f1d79a";
-  ctx.fillText(first, M - fit.size * 0.04, verseTop + fit.size + lineH);   // sits on the second line
+  if (quote) {
+    ctx.font = `500 ${fit.size * 1.3}px "Cormorant Garamond"`;
+    ctx.fillText(quote, M - ctx.measureText(quote).width - 6, verseTop + fit.size);
+  }
+  if (fit.inline) {
+    ctx.font = `400 ${fit.size}px "EB Garamond"`;
+    ctx.fillText(first, M, verseTop + fit.size);
+  } else {
+    ctx.font = `500 ${fit.capPx}px "Cormorant Garamond"`;
+    ctx.fillText(first, M - fit.size * 0.04, verseTop + fit.size + (fit.lines - 1) * lineH);   // sits on the last cap line
+  }
   ctx.restore();
 
   // The title word in gold leaf, with a crimson-and-gold rule beneath it.
@@ -1360,6 +1536,19 @@ async function shareCard(verse = currentVerse(), offsetDays = offset) {
   let tSize = 104;
   ctx.font = `500 ${tSize}px "Cormorant Garamond"`;
   while (trackedWidth(ctx, verse.word, tSize * 0.2) > W - 2 * M && tSize > 56) ctx.font = `500 ${(tSize -= 4)}px "Cormorant Garamond"`;
+  // A soft pool of shadow behind the title, for long verses that lift it onto the engraving.
+  const titleW = trackedWidth(ctx, verse.word, tSize * 0.2);
+  ctx.save();
+  ctx.translate(M + titleW / 2, titleY - tSize * 0.35);
+  ctx.scale(1, 0.42);
+  const pool = ctx.createRadialGradient(0, 0, 0, 0, 0, titleW * 0.75 + 80);
+  pool.addColorStop(0, "rgba(11,10,11,0.72)");
+  pool.addColorStop(0.6, "rgba(11,10,11,0.45)");
+  pool.addColorStop(1, "rgba(11,10,11,0)");
+  ctx.fillStyle = pool;
+  ctx.fillRect(-W, -W, 2 * W, 2 * W);
+  ctx.restore();
+  ctx.font = `500 ${tSize}px "Cormorant Garamond"`;
   const gilt = ctx.createLinearGradient(0, titleY - tSize * 0.72, 0, titleY);
   gilt.addColorStop(0, "#f1d79a");
   gilt.addColorStop(0.58, GOLD);
@@ -1435,6 +1624,8 @@ function toggleMenu(open = $("shareMenu").hidden) {
 
 // ---------- Controls ----------
 
+let lastRepeat = 0;
+
 function isTyping(target) {
   return target instanceof Element && !!target.closest("input, textarea, select, [contenteditable='true']");
 }
@@ -1461,6 +1652,9 @@ function wireControls() {
       return;
     }
     if (!$("shareMenu").hidden) return;          // let the menu use the keyboard
+    // A held arrow key steps calmly (about three days a second) instead of strobing.
+    if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && e.repeat && performance.now() - lastRepeat < 320) return;
+    if (e.repeat) lastRepeat = performance.now();
     if (e.key === "ArrowLeft") go(offset - 1);
     else if (e.key === "ArrowRight") go(offset + 1);
     else if (e.key === "t" || e.key === "T" || e.key === "Home") go(todayOffset());
@@ -1511,6 +1705,9 @@ window.verseAI = {
   // Hold every animation (text and scene) at `ms` into the current transition, or release with null.
   freezeAt: (ms) => {
     frozenTravel = ms === null ? null : Math.min(ms / TRAVEL_MS, 1);
+    // Hold the safety net too, or a slow renderer would settle the transition mid-filmstrip.
+    clearTimeout(transition.timer);
+    if (ms === null && transition.ghosts.length) transition.timer = setTimeout(settleTransition, SAFETY_MS);
     for (const a of document.getAnimations()) {
       if (ms === null) a.play();
       else { a.pause(); a.currentTime = ms; }
