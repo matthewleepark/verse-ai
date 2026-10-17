@@ -111,6 +111,11 @@ This log was rebuilt from the git history (`git log --reverse --date=iso --stat`
 
 ## Changes I made by hand
 
+- Created the verse-ai repo on GitHub.
+- Ran the commit and push commands myself (GitHub has everything up to 1cbc018).
+- Tested the poster in my browser and reported the Context panel overlapping the buttons.
+- Shared three reference posters for the poster style.
+
 ## Decisions
 
 Questions for me to answer:
