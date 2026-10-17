@@ -118,14 +118,18 @@ This log was rebuilt from the git history (`git log --reverse --date=iso --stat`
 
 ## Decisions
 
-Questions for me to answer:
+My answers to the main decisions:
 
 1. Why did you remove the Claude breakdowns (7632956) and make the app fully offline (5854fdb)?
+   - I made the app fully offline because I don't have usage credits and can't rely on them. Keeping it offline, so it works automatically with or without internet, felt like the best way to learn and be efficient.
 2. Why did you go from a pair of verses each day to one verse?
+   - Pairing verses each day felt overwhelming, with a lot of information to cover. Having one verse leaves room for more ideas and thoughts about that passage.
 3. Why the Berean Standard Bible?
-4. Why add a browser poster next to the command-line app?
-5. Why did the poster go comic → parchment → dark (f239f20, deb2661, 035285e)?
-6. What did you leave out on purpose?
+   - I had to use the Berean Standard Bible because of copyright.
+4. Why did the poster go comic → parchment → dark (f239f20, deb2661, 035285e)?
+   - The comic style felt a little unprofessional, and the message didn't really come through.
+5. What did you leave out on purpose?
+   - I left out any distractions that could take the focus away from the passage.
 
 ## Issues
 
