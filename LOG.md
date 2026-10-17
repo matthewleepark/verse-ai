@@ -1,72 +1,25 @@
 # Build Log, Artifact 2: verse-ai
 
-Tools: Claude Code (building), Claude chat (planning). Repo: https://github.com/matthewleepark/verse-ai. Date: 2026-10-16
+Tools: Claude Code (building), Claude chat (planning). Repo: https://github.com/matthewleepark/verse-ai. Date: 2026-10-14 to 2026-10-16
 
-Rebuilt from the git history (`git log --reverse --stat` and `git show`), not the README. "unknown" means the history doesn't show it.
-
-## Commits
-
-### dcaf459 · Oct 14, 22:54 · "Initial commit"
-- Done: Created the repo on GitHub with a one-line README.md.
-- Planned / Checked / Problems: unknown
-
-### 7632956 · Oct 14, 22:57 · "Add verse-ai CLI: daily verse pairs with Claude breakdowns"
-- Planned (from the commit message): an offline Bible, a daily pair of verses, a Claude breakdown saved for offline use, an interactive mode with a journal, and tests.
-- Done: Built the command-line app (main.py, bible.py, verses.py, interactive.py, journal.py) and added the full Berean Standard Bible (data/bsb.txt, 31,105 lines). analysis.py called the Claude API, and cache.py saved breakdowns.
-- Changed: 17 files, +32,170 lines, including 4 test files.
-- Checked / Problems: unknown
-
-### 5854fdb · Oct 15, 20:32 · "Offline daily verse with interactive poster"
-- Done:
-  - Removed the Claude feature (deleted analysis.py and cache.py).
-  - Switched to one verse per day, with 416 daily verses (data/daily_verses.json).
-  - Added study notes, book background and reflection questions.
-  - Added a streak (progress.py) and a Proverbs reading plan (study.py).
-  - Added the first browser poster (visual.py, web/template.html) with a public-domain 1860 woodcut.
-  - Added Desktop shortcuts (make_shortcut.ps1).
-- Changed: 31 files, +2,403 / −622, with 3 new test files.
-- Planned / Checked / Problems: unknown
-
-### f239f20 · Oct 16, 05:12 · "Cinematic verse transitions, sharing, and navigation fixes"
-- Done: Restyled the poster in a comic-book style (Bangers and Comic Neue fonts). Added verse-to-verse transitions, a share image, swipe and keyboard navigation, and a browser test (tools/browser_check.mjs).
-- Changed: 11 files, +1,504 / −379.
-- Problems: the message mentions "navigation fixes", but what they fixed is unknown.
-- Planned / Checked: unknown
-
-### deb2661 · Oct 16, 07:21 · "Engraved scripture style for the poster"
-- Done: Replaced the comic style with a light parchment, engraved-Bible look (EB Garamond and Cormorant Garamond fonts).
-- Changed: 12 files, +386 / −334.
-- Planned / Checked / Problems: unknown
-
-### 035285e · Oct 16, 08:59 · "Dark cinematic design for the poster"
-- Done: Made the poster dark: a night sea lit by one light behind Jesus.
-- Changed: 3 files, +485 / −280.
-- Planned / Checked / Problems: unknown
-
-### 1cbc018 · Oct 16, 21:52 · "Dark cinematic design: fixes from review"
-- Done (from the code comments):
-  - readable title and buttons
-  - the verse no longer runs into the figure
-  - a gold first letter
-  - a fixed Context panel overlap
-  - balanced quotation marks
-  - short verses shown larger
-  - reduced-motion support
-  - smoother fast clicks
-- Changed: 2 files, +257 / −58.
-- Checked (run by Claude Code on Oct 16):
-  - `python -m unittest discover tests` → 50 tests, OK
-  - `python main.py --date 2026-10-14` → showed 1 Peter 4:8 ("LOVE")
-  - `python visual.py --no-open` → poster built
-  - `node tools/browser_check.mjs` → 35/35 checks passed
-- Planned / Problems: unknown
-
-### 0d4a7ff · Oct 16, 22:34 · "Ignore .env files"
-- Done: Added `.env` back to .gitignore.
-- Checked: `git check-ignore .env` confirmed it's ignored.
-
-### 9f6388a, b301816, 94635e9, fd14eb2 · Oct 16 · LOG.md commits
-- Done: Wrote this log, rewrote it to match my portfolio log, then added my hand changes and decisions.
+- I asked Claude Code to build a Python command-line app called verse-ai for a school project. It would get a daily Bible verse about patience, empathy, conflict resolution or integrity from an online Bible website, explain it in three parts (Universal Wisdom, Historical Context, Theological Meaning), and have an interactive mode for follow-up questions, a summary, and a journal saved as Markdown files. I asked it to set up the project files and a CLAUDE.md, and to start with the verse fetcher.
+- Claude Code set up the project and wrote the verse fetcher. Python wasn't installed on my computer, so it couldn't run the code yet.
+- I said "do it for me." Claude Code installed Python, then built the three-part breakdown and the follow-up questions using the Claude API, plus the interactive mode and the journal. It tested everything with a fake version of Claude, since I didn't have an API key.
+- I asked to load the whole Bible in the NIV instead of using the website, and to pair two verses each day for endless combinations. Claude Code explained that the NIV is copyrighted and can't be bundled, so I chose the Berean Standard Bible, which is public domain. I picked "a wisdom verse plus a random partner verse" for the pairing.
+- I asked for it to work offline as well. Claude Code saved the Bible on my computer and made the AI breakdowns save locally, so verses and the journal work without internet.
+- I asked how to put it on GitHub for my Artifact 2 submission. Claude Code uploaded it to my verse-ai repo.
+- I asked whether it would really work, how to get an API key, and what to do without credits. Claude Code checked the AI part against a stand-in server, explained how to get a key, and suggested free options.
+- I asked to make it a free daily Bible study with no APIs. I chose to remove the AI completely and to add a streak, history, and a daily reading plan. I also asked for an easy way to open it without VS Code, so Claude Code added a Desktop icon and a Start menu entry.
+- I asked for a picture of Jesus that stays still while the water moves, showing a verse each day. I shared three reference posters. Claude Code used a public-domain 1860 woodcut of Jesus catching Peter, because my reference images were other people's designs.
+- I asked to stop pairing verses and show just one new verse each day, and to make it interactive. Claude Code wrote a list of 416 verses (no repeats for over a year) and added clicking the water for ripples, arrow keys to change the day, an About panel, and pausing.
+- I asked for the poster to fill the whole screen, with comic-book style waves, a more readable font, a Context tab instead of About, bigger buttons at the top, and more detail.
+- I gave Claude Code detailed instructions for smooth, cinematic transitions between days, along with a share button and navigation that always matches the verse on screen. It built and tested them in a real browser and fixed bugs it found along the way.
+- I said I didn't like the comic style and asked for a scripture style. Claude Code changed it to an old engraved-Bible look on parchment.
+- I asked for a more stunning look: a dark theme with charcoal, gold, and crimson, the verse as the main focus, smooth transitions, and a share image, while keeping it clean. Claude Code planned the design, built it, and had it reviewed in a browser.
+- I hit my usage limit partway through, then told Claude Code to continue once it reset.
+- I found a bug where text in the Context panel scrolled behind the buttons at the top and sent a screenshot. Claude Code fixed it.
+- I decided the phone layout didn't need more work and only desktop (Windows or Mac) mattered, so the phone fixes were left out.
+- I asked Claude Code to check the project for submission: run the tests and the app, check CLAUDE.md and .gitignore, write this log, and update my portfolio card.
 
 ## Changes I made by hand
 
@@ -90,7 +43,8 @@ Rebuilt from the git history (`git log --reverse --stat` and `git show`), not th
 
 ## Issues
 
-- `.env` was dropped from .gitignore in 5854fdb and added back in 0d4a7ff. No .env file was ever committed.
-- Some commits bundle several steps (5854fdb did four things at once), so the steps in between aren't in the history.
-- Commit messages don't say how changes were tested, so most "Checked" lines are unknown.
-- An old local `master` branch has only the initial commit. It isn't on GitHub.
+- I changed the design many times (comic, then parchment, then dark), which used up a lot of usage and time.
+- I ran out of usage credits partway through the dark design, and the work had to wait until it reset.
+- Claude Code sometimes thought something was done when it wasn't, like the Context panel bug I found myself. I had to test it and tell it what to fix.
+- Some saves to GitHub bundled several changes together, so the history doesn't show every step on its own.
+- The .env rule was dropped from .gitignore when the AI was removed, so I added it back. No .env file was ever uploaded.
